@@ -1,0 +1,17 @@
+{
+  "multipart": [
+    { "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_extension" } },
+    { "when": { "north": "wired" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_connection" } },
+    { "when": { "east": "wired" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_connection", "y": 90 } },
+    { "when": { "south": "wired" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_connection", "y": 180 } },
+    { "when": { "west": "wired" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_connection", "y": 270 } },
+    { "when": { "up": "wired" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_connection", "x": 270 } },
+    { "when": { "down": "wired" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_connection", "x": 90 } },
+    { "when": { "north": "support" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_support_white" } },
+    { "when": { "east": "support" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_support_white", "y": 90 } },
+    { "when": { "south": "support" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_support_white", "y": 180 } },
+    { "when": { "west": "support" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_support_white", "y": 270 } },
+    { "when": { "up": "support" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_support_white", "x": 270 } },
+    { "when": { "down": "support" }, "apply": { "model": "generallaymansaestheticspyingscreen:block/glass_support_white", "x": 90 } }
+  ]
+}

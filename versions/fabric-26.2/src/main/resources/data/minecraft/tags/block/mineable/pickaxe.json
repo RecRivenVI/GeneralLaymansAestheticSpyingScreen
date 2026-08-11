@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "generallaymansaestheticspyingscreen:glass_terminal",
+    "generallaymansaestheticspyingscreen:glass_projector",
+    "generallaymansaestheticspyingscreen:glass_extension",
+    "generallaymansaestheticspyingscreen:glass_wireless_extension"
+  ]
+}

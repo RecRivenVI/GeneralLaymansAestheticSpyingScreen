@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "${description}",
+  "authors": [
+    "${authors}"
+  ],
+  "contact": {
+    "homepage": "${homepage}",
+    "sources": "${sources}",
+    "issues": "${issues}"
+  },
+  "license": "${license}",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "me.ichun.mods.glass.GlassMod"
+    ],
+    "client": [
+      "me.ichun.mods.glass.GlassClient"
+    ],
+    "modmenu": [
+      "me.ichun.mods.glass.client.GlassModMenu"
+    ]
+  },
+  "mixins": [
+    "generallaymansaestheticspyingscreen.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "${loader}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft}",
+    "java": ">=${java}"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

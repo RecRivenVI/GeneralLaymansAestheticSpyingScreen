@@ -1,15 +1,46 @@
+# Gradle and compiled output
+.gradle/
+**/.gradle/
+/.kotlin/
+**/build/
+/out/
+/libs/
 *.class
+*.hprof
+hs_err_pid*
+replay_pid*
 
-# Package Files #
-*.war
-*.ear
-
-# IDEA Files #
+# IDE metadata
+.idea/
+.vscode/
+.fleet/
 *.iml
-/.idea
+*.ipr
+*.iws
+*.launch
+.classpath
+.project
+.settings/
 
-# Gradle #
-/.gradle
-/build
-/libs
-/src/api
+# Minecraft development runtime data
+/run/
+/run-*/
+**/logs/
+/net/
+crash-reports/
+
+# Local development tools and operating-system files
+/.devtools/
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*~
+.env
+.env.*
+!.env.example

@@ -1,0 +1,57 @@
+mod.id = "generallaymansaestheticspyingscreen"
+mod.name = "General Layman's Aesthetic Spying Screen"
+mod.group = "me.ichun.mods.glass"
+mod.version = "8.0.0-alpha.1"
+mod.description = "Projects live views of distant locations through configurable display networks."
+mod.authors = "RecRivenVI"
+mod.license = "LGPL-3.0-or-later"
+mod.homepage = "https://github.com/RecRivenVI/GeneralLaymansAestheticSpyingScreen"
+mod.sources = "https://github.com/RecRivenVI/GeneralLaymansAestheticSpyingScreen"
+mod.issues = "https://github.com/RecRivenVI/GeneralLaymansAestheticSpyingScreen/issues"
+target.status = "planned"
+target.client = true
+target.server = true
+
+# loom-back-compat requires this exact external plugin property key.
+loomx.loom_version = "1.17-SNAPSHOT"
+deps.junit = "6.0.3"
+deps.fabric.loader = "0.19.3"
+
+["1.20.1"]
+target.java = 17
+target.minecraft.compatibility = "[1.20.1,1.21)"
+
+[forge."1.20.1"]
+deps.forge.loader = "1.20.1-47.4.22"
+target.loader.compatibility = "[47,)"
+
+["1.21.1"]
+target.java = 21
+target.minecraft.compatibility = "[1.21.1,1.22)"
+
+[neoforge."1.21.1"]
+deps.neoforge.loader = "21.1.248"
+target.loader.compatibility = "[4,)"
+
+["26.1.2"]
+target.java = 25
+target.minecraft.compatibility = "[26.1.2,26.2)"
+
+[neoforge."26.1.2"]
+deps.neoforge.loader = "26.1.2.94"
+target.loader.compatibility = "[26.1.2,)"
+
+["26.2"]
+target.java = 25
+
+[fabric."26.2"]
+deps.fabric.api = "0.156.0+26.2"
+deps.modmenu = "20.0.1"
+target.status = "implemented"
+target.minecraft.compatibility = "~26.2"
+target.loader.compatibility = ">=0.19.3"
+
+[neoforge."26.2"]
+deps.neoforge.loader = "26.2.0.57"
+target.minecraft.compatibility = "[26.2,26.3)"
+target.loader.compatibility = "[26.2,)"
