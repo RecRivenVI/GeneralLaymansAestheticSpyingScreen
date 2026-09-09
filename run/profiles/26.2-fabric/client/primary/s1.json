@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "node": "26.2-fabric",
+  "profile": "S1",
+  "role": "PRIMARY",
+  "playerName": "RecRivenVI",
+  "resolution": "2560x1440",
+  "gameDirectory": "run/instances/26.2-fabric/client/primary/s1",
+  "modsDirectory": "run/instances/26.2-fabric/client/primary/s1/mods",
+  "requiredJvmArgs": [],
+  "requiredTestMods": [],
+  "compatibilityFixture": []
+}

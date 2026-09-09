@@ -15,7 +15,7 @@ spotless {
     encoding = Charsets.UTF_8
 
     java {
-        target("src/**/*.java", "versions/**/*.java")
+        target("src/**/*.java")
         targetExclude("**/build/**", "run/**")
         googleJavaFormat().aosp()
         formatAnnotations()

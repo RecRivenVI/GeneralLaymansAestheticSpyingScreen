@@ -1,6 +1,7 @@
-mod.id = "generallaymansaestheticspyingscreen"
-mod.name = "General Layman's Aesthetic Spying Screen"
-mod.group = "me.ichun.mods.glass"
+mod.id = "glass"
+mod.name = "G.L.A.S.S."
+mod.group = "io.github.recrivenvi"
+mod.package = "io.github.recrivenvi.glass"
 mod.version = "8.0.0-alpha.1"
 mod.description = "Projects live views of distant locations through configurable display networks."
 mod.authors = "RecRivenVI"
@@ -12,7 +13,6 @@ target.status = "planned"
 target.client = true
 target.server = true
 
-# loom-back-compat requires this exact external plugin property key.
 loomx.loom_version = "1.17-SNAPSHOT"
 deps.junit = "6.0.3"
 deps.fabric.loader = "0.19.3"
@@ -22,7 +22,7 @@ target.java = 17
 target.minecraft.compatibility = "[1.20.1,1.21)"
 
 [forge."1.20.1"]
-deps.forge.loader = "1.20.1-47.4.22"
+deps.forge.loader = "1.20.1-47.4.23"
 target.loader.compatibility = "[47,)"
 
 ["1.21.1"]
@@ -38,7 +38,7 @@ target.java = 25
 target.minecraft.compatibility = "[26.1.2,26.2)"
 
 [neoforge."26.1.2"]
-deps.neoforge.loader = "26.1.2.94"
+deps.neoforge.loader = "26.1.2.97"
 target.loader.compatibility = "[26.1.2,)"
 
 ["26.2"]
@@ -52,6 +52,6 @@ target.minecraft.compatibility = "~26.2"
 target.loader.compatibility = ">=0.19.3"
 
 [neoforge."26.2"]
-deps.neoforge.loader = "26.2.0.57"
+deps.neoforge.loader = "26.2.0.66"
 target.minecraft.compatibility = "[26.2,26.3)"
 target.loader.compatibility = "[26.2,)"

@@ -1,0 +1,8 @@
+{
+  "ambience": {
+    "category": "block",
+    "sounds": [
+      "glass:amb"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "node": "26.2-fabric",
+  "profile": "M2",
+  "role": "SERVER",
+  "playerName": null,
+  "resolution": null,
+  "gameDirectory": "run/instances/26.2-fabric/server/dedicated/m2",
+  "modsDirectory": "run/instances/26.2-fabric/server/dedicated/m2/mods",
+  "requiredJvmArgs": [],
+  "requiredTestMods": [],
+  "compatibilityFixture": []
+}

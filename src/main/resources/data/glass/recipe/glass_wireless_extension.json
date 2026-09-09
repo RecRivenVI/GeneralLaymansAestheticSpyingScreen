@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "glass:glass_extension",
+    "minecraft:end_crystal"
+  ],
+  "result": { "id": "glass:glass_wireless_extension" }
+}

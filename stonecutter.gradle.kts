@@ -1,49 +1,42 @@
 import dev.kikugie.stonecutter.data.tree.ProjectNode
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 plugins {
     id("dev.kikugie.stonecutter")
-    id("net.fabricmc.fabric-loom") version "1.17-SNAPSHOT" apply false
-    id("net.fabricmc.fabric-loom-remap") version "1.17-SNAPSHOT" apply false
 }
 
-repositories {
-    mavenCentral()
-}
-
-stonecutter flags {
-    this["line_separator"] = "\n"
-}
-
-stonecutter active file("versions/current")
+stonecutter active "26.2-fabric"
 
 stonecutter parameters {
-    val loader = current.project.substringBefore('-')
-    val version = current.project.substringAfter('-')
+    val (version, loader) = current.project.split('-', limit = 2)
 
     properties {
         tags(version, loader)
     }
-
     constants {
         match(loader, "fabric", "forge", "neoforge")
     }
-
     swaps["mod_version"] = "\"${properties.get<String>("mod.version")}\";"
     swaps["minecraft"] = "\"${node.metadata.version}\";"
+    swaps["target_id"] = "\"${current.project}\";"
     constants["release"] = false
-    targets["fapi"] = properties.getOrNull<String>("deps.fabric.api") ?: "0"
+    dependencies["fapi"] = properties.getOrNull<String>("deps.fabric.api") ?: "0"
 }
 
-abstract class VerifyTargetRegistryTask : DefaultTask() {
-    @get:Input
-    abstract val repositoryPath: Property<String>
+stonecutter.tasks.order("createMinecraftArtifacts") {
+    metadata.project.endsWith("-forge") || metadata.project.endsWith("-neoforge")
+}
+
+abstract class VerifyGlassProject : DefaultTask() {
+    @get:Internal
+    abstract val repositoryRoot: DirectoryProperty
 
     @get:Input
     abstract val activeTarget: Property<String>
@@ -52,138 +45,138 @@ abstract class VerifyTargetRegistryTask : DefaultTask() {
     abstract val expectedTargets: ListProperty<String>
 
     @get:Input
-    abstract val expectedStatuses: ListProperty<String>
-
-    @get:Input
     abstract val actualStatuses: ListProperty<String>
 
     @TaskAction
     fun verify() {
-        val repository = File(repositoryPath.get())
-        val versions = repository.resolve("versions")
-        val actualTargets =
+        val root = repositoryRoot.get().asFile
+        val expected = expectedTargets.get().sorted()
+        val versions = root.resolve("versions")
+        val actual =
             versions
                 .listFiles()
                 ?.filter(File::isDirectory)
                 ?.map(File::getName)
                 ?.sorted()
                 .orEmpty()
-        val expectedTargetNames = expectedTargets.get().sorted()
-        check(actualTargets == expectedTargetNames) {
-            "Stonecutter targets must be exactly $expectedTargetNames, found $actualTargets."
+        check(actual == expected) { "Stonecutter nodes must be exactly $expected, found $actual." }
+
+        val selected = versions.resolve("current").readText().trim()
+        check(selected == activeTarget.get()) {
+            "versions/current must contain '${activeTarget.get()}', found '$selected'."
         }
 
-        val selectedTarget = versions.resolve("current").readText().trim()
-        check(selectedTarget == activeTarget.get()) {
-            "versions/current must contain '${activeTarget.get()}', found '$selectedTarget'."
+        val expectedStatuses =
+            expected
+                .map { target ->
+                    "$target=${if (target == activeTarget.get()) "implemented" else "planned"}"
+                }.toSet()
+        check(actualStatuses.get().toSet() == expectedStatuses) {
+            "Target statuses must be exactly $expectedStatuses, found ${actualStatuses.get()}."
         }
 
-        val expectedStatusEntries = expectedStatuses.get().sorted()
-        val actualStatusEntries = actualStatuses.get().sorted()
-        check(actualStatusEntries == expectedStatusEntries) {
-            "Target statuses must be exactly $expectedStatusEntries, found $actualStatusEntries."
-        }
-
-        expectedTargetNames.forEach { target ->
-            val targetDirectory = versions.resolve(target)
-            val resourceRoot = targetDirectory.resolve("src/main/resources")
-            check(resourceRoot.isDirectory) {
-                "Target '$target' must provide src/main/resources."
+        expected.forEach { target ->
+            check(!versions.resolve(target).resolve("src").exists()) {
+                "Authored source is forbidden under versions/$target/src."
             }
-            val metadata =
-                when {
-                    target.startsWith("fabric-") -> resourceRoot.resolve("fabric.mod.json")
-                    target.startsWith("forge-") -> resourceRoot.resolve("META-INF/mods.toml")
-                    else -> resourceRoot.resolve("META-INF/neoforge.mods.toml")
-                }
-            check(metadata.isFile) {
-                "Target '$target' must provide ${metadata.relativeTo(repository).invariantSeparatorsPath}."
-            }
+        }
+
+        val sourceLayers =
+            root
+                .resolve("src")
+                .listFiles()
+                ?.filter(File::isDirectory)
+                ?.map(File::getName)
+                ?.sorted()
+                .orEmpty()
+        check(sourceLayers.all { it == "main" || it == "test" }) {
+            "Only src/main and src/test are permitted, found $sourceLayers."
+        }
+        check(root.resolve("src/main/java/io/github/recrivenvi/glass").isDirectory) {
+            "Production package root must be io.github.recrivenvi.glass."
+        }
+        check(!root.resolve("src/main/java/me/ichun/mods/glass").exists()) {
+            "Legacy Java package remains in authored source."
+        }
+        check(root.resolve("src/main/resources/assets/glass").isDirectory) {
+            "Asset namespace must be assets/glass."
+        }
+        check(root.resolve("src/main/resources/data/glass").isDirectory) {
+            "Data namespace must be data/glass."
+        }
+
+        listOf(
+            "src/main/resources/fabric.mod.json",
+            "src/main/resources/META-INF/mods.toml",
+            "src/main/resources/META-INF/neoforge.mods.toml",
+        ).forEach { relative ->
+            check(root.resolve(relative).isFile) { "Missing co-located Loader metadata: $relative" }
+        }
+
+        check(!root.resolve("build.planned.gradle.kts").exists()) {
+            "V2 must not use a custom planned-node build script."
+        }
+        check(!root.resolve("build/artifacts").exists()) {
+            "Legacy build/artifacts output is forbidden; use build/libs/<mod-version>."
+        }
+        check(!root.resolve(".github/workflows").exists()) { "GitHub workflows must be absent." }
+        listOf("AGENTS.md", "README.md", "CREDITS.md", "docs").forEach { relative ->
+            check(!root.resolve(relative).exists()) { "Port-generated documentation must be absent: $relative" }
         }
     }
 }
 
 val targetIds =
     listOf(
-        "forge-1.20.1",
-        "neoforge-1.21.1",
-        "neoforge-26.1.2",
-        "fabric-26.2",
-        "neoforge-26.2",
+        "1.20.1-forge",
+        "1.21.1-neoforge",
+        "26.1.2-neoforge",
+        "26.2-fabric",
+        "26.2-neoforge",
     )
-val expectedTargetStatuses =
-    targetIds.map { target ->
-        "$target=${if (target == "fabric-26.2") "implemented" else "planned"}"
-    }
-val actualTargetStatuses =
-    targetIds.map { target ->
-        "$target=${project(":$target").property("target.status")}"
-    }
+val activeTargetId = "26.2-fabric"
+val activeTarget: ProjectNode.() -> Boolean = { metadata.project == activeTargetId }
 
-val implementedTargets: ProjectNode.() -> Boolean = {
-    project.property("target.status").toString() == "implemented"
-}
-
-val targetContracts = stonecutter.tasks.named("verifyTargetContract")
-val targetTests = stonecutter.tasks.named("test", implementedTargets)
-val targetChecks = stonecutter.tasks.named("check", implementedTargets)
-val targetBuilds = stonecutter.tasks.named("build", implementedTargets)
-val targetArtifacts = stonecutter.tasks.named("collectArtifact", implementedTargets)
-val clearCollectedArtifacts =
-    tasks.register<Delete>("clearCollectedArtifacts") {
-        description = "Removes previously collected production artifacts."
-        delete(layout.buildDirectory.dir("artifacts"))
-    }
-
-val verifyTargetRegistry =
-    tasks.register<VerifyTargetRegistryTask>("verifyTargetRegistry") {
+val verifyTargets =
+    tasks.register<VerifyGlassProject>("verifyTargets") {
         group = "verification"
-        description = "Verifies the exact target registry, statuses, active target, and metadata layout."
-        repositoryPath.set(layout.projectDirectory.asFile.absolutePath)
-        activeTarget.set("fabric-26.2")
+        description = "Verifies G.L.A.S.S. Identity, V2 topology, source ownership, and business status."
+        repositoryRoot.set(layout.projectDirectory)
+        activeTarget.set(activeTargetId)
         expectedTargets.set(targetIds)
-        expectedStatuses.set(expectedTargetStatuses)
-        actualStatuses.set(actualTargetStatuses)
+        actualStatuses.set(
+            targetIds.map { target -> "$target=${project(":$target").property("target.status")}" },
+        )
     }
 
 tasks.register("spotlessApply") {
     group = "formatting"
-    description = "Applies repository formatting through the isolated Spotless build."
+    description = "Applies the GLASS project formatting extension."
     dependsOn(gradle.includedBuild("glass-spotless").task(":spotlessApply"))
 }
 
 tasks.register("spotlessCheck") {
     group = "verification"
-    description = "Checks repository formatting through the isolated Spotless build."
+    description = "Checks the GLASS project formatting extension."
     dependsOn(gradle.includedBuild("glass-spotless").task(":spotlessCheck"))
 }
 
-tasks.register("verifyTargets") {
-    group = "verification"
-    description = "Verifies all five target names, statuses, capabilities, directories, and metadata."
-    dependsOn(verifyTargetRegistry, targetContracts)
+fun registerActiveAggregate(
+    name: String,
+    nodeTask: String,
+    groupName: String,
+) = tasks.register(name) {
+    group = groupName
+    description = "$name is an explicit GLASS aggregate for the active business target."
+    dependsOn(verifyTargets)
+    dependsOn(stonecutter.tasks.named(nodeTask, activeTarget).map { it.values })
 }
 
-tasks.register("testAll") {
-    group = "verification"
-    description = "Runs tests for every implemented Stonecutter target."
-    dependsOn("verifyTargets", targetTests)
-}
+registerActiveAggregate("testAll", "test", "verification")
+registerActiveAggregate("checkAll", "check", "verification")
+registerActiveAggregate("buildAll", "build", "build")
+registerActiveAggregate("collectArtifacts", "buildAndCollect", "build")
 
-tasks.register("checkAll") {
-    group = "verification"
-    description = "Runs checks for every implemented Stonecutter target."
-    dependsOn("spotlessCheck", "verifyTargets", targetChecks)
-}
-
-tasks.register("buildAll") {
-    group = "build"
-    description = "Builds every implemented Stonecutter target."
-    dependsOn("verifyTargets", targetBuilds)
-}
-
-tasks.register("collectArtifacts") {
-    group = "build"
-    description = "Collects production artifacts from every implemented Stonecutter target."
-    dependsOn("verifyTargets", clearCollectedArtifacts, targetArtifacts)
+tasks.named("checkAll") {
+    dependsOn("spotlessCheck")
 }

@@ -1,17 +1,21 @@
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
 plugins {
     id("net.neoforged.moddev") version "2.0.140"
+    id("neoforge-mutex")
 }
 
-apply(from = rootProject.file("gradle/stonecutter-target-conventions.gradle.kts"))
-
-version = "${property("mod.version")}+${sc.current.project}"
 group = property("mod.group") as String
-base.archivesName = property("mod.id") as String
+version = "${property("mod.version")}+${sc.current.version}"
+base.archivesName = "${property("mod.id") as String}-neoforge"
 
 val targetJava = property("target.java").toString().toInt()
 val requiredJava = JavaVersion.toVersion(targetJava)
-val gameWindowWidth = 2560
-val gameWindowHeight = 1440
+val runtime = rootProject.projectDir.resolve("run/instances/${sc.current.project}").canonicalFile
+
+repositories {
+    mavenCentral()
+}
 
 neoForge {
     version = property("deps.neoforge.loader") as String
@@ -22,15 +26,28 @@ neoForge {
     }
     runs {
         register("client") {
-            gameDirectory = rootProject.file("run/${sc.current.project}/client")
-            client()
+            gameDirectory = runtime.resolve("client/primary/s2")
+            programArgument("--username")
+            programArgument("RecRivenVI")
             programArgument("--width")
-            programArgument(gameWindowWidth.toString())
+            programArgument("2560")
             programArgument("--height")
-            programArgument(gameWindowHeight.toString())
+            programArgument("1440")
+            client()
+        }
+        register("clientMultiplayer") {
+            gameDirectory = runtime.resolve("client/secondary/m1")
+            programArgument("--username")
+            programArgument("CNN_MOYAN")
+            programArgument("--width")
+            programArgument("2560")
+            programArgument("--height")
+            programArgument("1440")
+            client()
         }
         register("server") {
-            gameDirectory = rootProject.file("run/${sc.current.project}/server")
+            gameDirectory = runtime.resolve("server/dedicated/m2")
+            programArgument("nogui")
             server()
         }
     }
@@ -46,10 +63,6 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     testImplementation(platform("org.junit:junit-bom:${property("deps.junit")}"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -61,10 +74,13 @@ sourceSets.main {
 }
 
 tasks {
+    withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
     test {
         useJUnitPlatform()
     }
-
     processResources {
         val props =
             mapOf(
@@ -83,11 +99,14 @@ tasks {
         inputs.properties(props)
         filesMatching("META-INF/neoforge.mods.toml") { expand(props) }
     }
-
-    register<Sync>("collectArtifact") {
+    named("createMinecraftArtifacts") {
+        dependsOn("stonecutterGenerate")
+    }
+    register<Sync>("buildAndCollect") {
         group = "build"
-        dependsOn("build")
-        from(named<Jar>("jar").flatMap { it.archiveFile })
-        into(rootProject.layout.buildDirectory.dir("artifacts/${sc.current.project}"))
+        description = "Builds and collects the NeoForge production and sources JARs."
+        from(jar.flatMap { it.archiveFile }, named<Jar>("sourcesJar").flatMap { it.archiveFile })
+        into(rootProject.layout.buildDirectory.dir("libs/${project.property("mod.version")}"))
+        duplicatesStrategy = DuplicatesStrategy.FAIL
     }
 }

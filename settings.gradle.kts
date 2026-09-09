@@ -3,8 +3,8 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
         maven("https://maven.fabricmc.net/") { name = "FabricMC" }
-        maven("https://maven.minecraftforge.net/") { name = "MinecraftForge" }
         maven("https://maven.neoforged.net/releases/") { name = "NeoForged" }
+        maven("https://maven.minecraftforge.net/") { name = "MinecraftForge" }
         maven("https://maven.kikugie.dev/releases") { name = "KikuGie Releases" }
         maven("https://maven.kikugie.dev/snapshots") { name = "KikuGie Snapshots" }
     }
@@ -15,60 +15,46 @@ includeBuild("gradle/spotless") {
 }
 
 plugins {
-    id("dev.kikugie.stonecutter") version "0.10-alpha.5"
+    id("dev.kikugie.stonecutter") version "0.9.7"
+    id("dev.kikugie.loom-back-compat") version "0.4.2"
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
-    "The Stonecutter 0.10 build must run on JDK 25 or newer; current runtime is ${JavaVersion.current()}."
+    "The G.L.A.S.S. Stonecutter build must run on JDK 25 or newer; current runtime is ${JavaVersion.current()}."
 }
 
 stonecutter {
-    val targetStatuses = mutableMapOf<String, String>()
+    val statuses = mutableMapOf<String, String>()
 
     fun targetStatus(
         loader: String,
-        minecraftVersion: String,
+        version: String,
     ): String =
-        properties.getOrNull<String>("$loader.$minecraftVersion.target.status")
+        properties.getOrNull<String>("$loader.$version.target.status")
             ?: properties.get<String>("target.status")
 
     create(rootProject) {
-        fun target(
-            loader: String,
-            minecraftVersion: String,
+        fun match(
+            project: String,
+            vararg loaders: String,
+            version: String = project,
         ) {
-            val targetId = "$loader-$minecraftVersion"
-            val status = targetStatus(loader, minecraftVersion)
-            targetStatuses[targetId] = status
-            val buildscript =
-                when (status) {
-                    "implemented" -> {
-                        "build.$loader.gradle.kts"
-                    }
-
-                    "planned" -> {
-                        "build.planned.gradle.kts"
-                    }
-
-                    else -> {
-                        error(
-                            "Target '$loader-$minecraftVersion' has unsupported status '$status'.",
-                        )
-                    }
-                }
-            version(targetId, minecraftVersion).buildscript(buildscript)
+            for (loader in loaders) {
+                val target = "$project-$loader"
+                statuses[target] = targetStatus(loader, version)
+                version(target, version).buildscript("build.$loader.gradle.kts")
+            }
         }
 
-        target("forge", "1.20.1")
-        target("neoforge", "1.21.1")
-        target("neoforge", "26.1.2")
-        target("fabric", "26.2")
-        target("neoforge", "26.2")
-        vcsVersion = "fabric-26.2"
+        match("1.20.1", "forge")
+        match("1.21.1", "neoforge")
+        match("26.1.2", "neoforge")
+        match("26.2", "fabric", "neoforge")
+        vcsVersion = "26.2-fabric"
     }
 
-    val plannedMaintenanceTasks =
+    val maintenance =
         setOf(
             "artifactTransforms",
             "buildEnvironment",
@@ -83,31 +69,23 @@ stonecutter {
             "properties",
             "resolvableConfigurations",
             "tasks",
-            "verifyClientTarget",
-            "verifyServerTarget",
-            "verifyTarget",
-            "verifyTargetContract",
         )
-    gradle.startParameter.taskNames.forEach { requestedTask ->
-        val path = requestedTask.split(':').filter(String::isNotBlank)
+    gradle.startParameter.taskNames.forEach { request ->
+        val path = request.split(':').filter(String::isNotBlank)
         if (path.size != 2) return@forEach
-        val targetId = path[0]
-        val taskName = path[1]
-        if (targetStatuses[targetId] != "planned" || taskName in plannedMaintenanceTasks) {
-            return@forEach
-        }
+        val target = path[0]
+        val task = path[1]
+        if (statuses[target] != "planned" || task in maintenance) return@forEach
 
-        val loader = targetId.substringBefore('-')
-        val minecraftVersion = targetId.substringAfter('-')
+        val version = target.substringBeforeLast('-')
+        val loader = target.substringAfterLast('-')
         error(
-            "Target '$targetId' has status 'planned'. " +
-                "Direct task '$requestedTask' is blocked during settings evaluation, before any " +
-                "source generation, compilation, loader dependency resolution, packaging, or " +
-                "runtime launch. Set [$loader.\"$minecraftVersion\"].target.status = \"implemented\" " +
-                "in stonecutter.properties.toml only after the target implementation and validation " +
-                "are complete.",
+            "Target '$target' has status 'planned'. Direct task '$request' is blocked during " +
+                "settings evaluation before source generation, compilation, Loader dependency " +
+                "resolution, packaging, or runtime launch. Set [$loader.\"$version\"]" +
+                ".target.status = \"implemented\" only after implementation and qualification.",
         )
     }
 }
 
-rootProject.name = "GeneralLaymansAestheticSpyingScreen"
+rootProject.name = "GLASS"

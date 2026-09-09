@@ -1,17 +1,58 @@
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
 plugins {
-    id("net.minecraftforge.gradle") version "7.0.31"
+    id("net.neoforged.moddev.legacyforge") version "2.0.140"
+    id("forge-mutex")
 }
 
-apply(from = rootProject.file("gradle/stonecutter-target-conventions.gradle.kts"))
-
-version = "${property("mod.version")}+${sc.current.project}"
 group = property("mod.group") as String
-base.archivesName = property("mod.id") as String
+version = "${property("mod.version")}+${sc.current.version}"
+base.archivesName = "${property("mod.id") as String}-forge"
 
-val gameWindowWidth = 2560
-val gameWindowHeight = 1440
 val targetJava = property("target.java").toString().toInt()
 val requiredJava = JavaVersion.toVersion(targetJava)
+val runtime = rootProject.projectDir.resolve("run/instances/${sc.current.project}").canonicalFile
+
+repositories {
+    mavenCentral()
+}
+
+legacyForge {
+    version = property("deps.forge.loader") as String
+    validateAccessTransformers = true
+    mods {
+        register(property("mod.id") as String) {
+            sourceSet(sourceSets.main.get())
+        }
+    }
+    runs {
+        register("client") {
+            gameDirectory = runtime.resolve("client/primary/s2")
+            programArgument("--username")
+            programArgument("RecRivenVI")
+            programArgument("--width")
+            programArgument("2560")
+            programArgument("--height")
+            programArgument("1440")
+            client()
+        }
+        register("clientMultiplayer") {
+            gameDirectory = runtime.resolve("client/secondary/m1")
+            programArgument("--username")
+            programArgument("CNN_MOYAN")
+            programArgument("--width")
+            programArgument("2560")
+            programArgument("--height")
+            programArgument("1440")
+            client()
+        }
+        register("server") {
+            gameDirectory = runtime.resolve("server/dedicated/m2")
+            programArgument("nogui")
+            server()
+        }
+    }
+}
 
 java {
     withSourcesJar()
@@ -23,34 +64,7 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-minecraft {
-    mappings("official", sc.current.version)
-    runs {
-        create("client") {
-            workingDir.set(
-                rootProject.layout.projectDirectory.dir("run/${sc.current.project}/client"),
-            )
-            args(
-                "--width",
-                gameWindowWidth.toString(),
-                "--height",
-                gameWindowHeight.toString(),
-            )
-        }
-        create("server") {
-            workingDir.set(
-                rootProject.layout.projectDirectory.dir("run/${sc.current.project}/server"),
-            )
-        }
-    }
-}
-
 dependencies {
-    implementation(minecraft.dependency("net.minecraftforge:forge:${property("deps.forge.loader")}"))
     testImplementation(platform("org.junit:junit-bom:${property("deps.junit")}"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -61,10 +75,13 @@ sourceSets.main {
 }
 
 tasks {
+    withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
     test {
         useJUnitPlatform()
     }
-
     processResources {
         val props =
             mapOf(
@@ -83,11 +100,18 @@ tasks {
         inputs.properties(props)
         filesMatching("META-INF/mods.toml") { expand(props) }
     }
-
-    register<Sync>("collectArtifact") {
+    named("createMinecraftArtifacts") {
+        dependsOn("stonecutterGenerate")
+    }
+    register<Sync>("buildAndCollect") {
         group = "build"
-        dependsOn("build")
-        from(named<Jar>("jar").flatMap { it.archiveFile })
-        into(rootProject.layout.buildDirectory.dir("artifacts/${sc.current.project}"))
+        description = "Builds and collects the Forge production and sources JARs."
+        dependsOn("reobfJar")
+        from(
+            layout.buildDirectory.file("libs/${base.archivesName.get()}-${project.version}.jar"),
+            named<Jar>("sourcesJar").flatMap { it.archiveFile },
+        )
+        into(rootProject.layout.buildDirectory.dir("libs/${project.property("mod.version")}"))
+        duplicatesStrategy = DuplicatesStrategy.FAIL
     }
 }

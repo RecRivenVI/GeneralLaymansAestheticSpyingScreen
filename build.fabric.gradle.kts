@@ -1,19 +1,91 @@
+import groovy.json.JsonSlurper
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
 plugins {
-    id("dev.kikugie.loom-back-compat") version "0.4.2"
+    id("dev.kikugie.loom-back-compat")
 }
 
-apply(from = rootProject.file("gradle/stonecutter-target-conventions.gradle.kts"))
+data class RepositoryProfile(
+    val gameDirectory: File,
+    val modsDirectory: File,
+    val playerName: String?,
+    val requiredJvmArgs: List<String>,
+)
 
-version = "${property("mod.version")}+${sc.current.project}"
+fun resolveRepositoryPath(relativePath: String): File {
+    require(relativePath.isNotBlank() && !File(relativePath).isAbsolute) {
+        "Runtime paths must be non-empty and repository-relative: $relativePath"
+    }
+    val root = rootProject.projectDir.canonicalFile
+    val resolved = root.resolve(relativePath).canonicalFile
+    require(resolved.toPath().startsWith(root.toPath())) {
+        "Runtime path escapes the repository: $relativePath"
+    }
+    return resolved
+}
+
+fun loadRepositoryProfile(
+    role: String,
+    profile: String,
+): RepositoryProfile {
+    val profileOwner =
+        if (role == "SERVER") {
+            "server/dedicated"
+        } else {
+            "client/${role.lowercase()}"
+        }
+    val record =
+        rootProject.projectDir.resolve(
+            "run/profiles/${sc.current.project}/$profileOwner/${profile.lowercase()}.json",
+        )
+    require(record.isFile) { "Missing repository-local profile record: $record" }
+    @Suppress("UNCHECKED_CAST")
+    val values = JsonSlurper().parse(record) as Map<String, Any?>
+    require(values["node"] == sc.current.project) { "Runtime record has the wrong node: $record" }
+    require(values["role"] == role && values["profile"] == profile) {
+        "Runtime record role/profile mismatch: $record"
+    }
+    if (role != "SERVER") {
+        require(values["resolution"] == "2560x1440") { "GLASS clients must use 2560x1440." }
+    }
+
+    val gameDirectory = resolveRepositoryPath(values.getValue("gameDirectory").toString())
+    val modsDirectory = resolveRepositoryPath(values.getValue("modsDirectory").toString())
+    require(modsDirectory == gameDirectory.resolve("mods")) {
+        "modsDirectory must equal gameDirectory/mods: $record"
+    }
+    val requiredJvmArgs =
+        (values["requiredJvmArgs"] as? List<*>)?.map {
+            requireNotNull(it).toString()
+        } ?: emptyList()
+    return RepositoryProfile(
+        gameDirectory,
+        modsDirectory,
+        values["playerName"]?.toString(),
+        requiredJvmArgs,
+    )
+}
+
 group = property("mod.group") as String
-base.archivesName = property("mod.id") as String
+version = "${property("mod.version")}+${sc.current.version}"
+base.archivesName = "${property("mod.id") as String}-fabric"
 
 val targetJava = property("target.java").toString().toInt()
 val requiredJava = JavaVersion.toVersion(targetJava)
-val gameWindowWidth = 2560
-val gameWindowHeight = 1440
+val requestedProfile =
+    providers
+        .gradleProperty("runtime.profile")
+        .orElse("S2")
+        .get()
+        .uppercase()
+require(requestedProfile in setOf("S1", "S2", "M1", "M2")) {
+    "runtime.profile must be S1, S2, M1, or M2"
+}
+val secondaryProfile = if (requestedProfile == "M2") "M2" else "M1"
+val clientProfile = loadRepositoryProfile("PRIMARY", requestedProfile)
+val multiplayerProfile = loadRepositoryProfile("SECONDARY", secondaryProfile)
+val serverProfile = loadRepositoryProfile("SERVER", "M2")
 val runtimeWorld = providers.gradleProperty("runtime.world").orNull
-val runtimeUsername = providers.gradleProperty("runtime.username").orNull
 
 repositories {
     mavenCentral()
@@ -25,25 +97,45 @@ dependencies {
     loomx.applyMojangMappings()
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric.loader")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${sc.properties.get<String>("deps.fabric.api")}")
-    modImplementation("com.terraformersmc:modmenu:${sc.properties.get<String>("deps.modmenu")}")
+    modCompileOnly("com.terraformersmc:modmenu:${sc.properties.get<String>("deps.modmenu")}")
     testImplementation(platform("org.junit:junit-bom:${property("deps.junit")}"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 loom {
-    fabricModJsonPath = project.file("src/main/resources/fabric.mod.json")
-
     decompilerOptions.named("vineflower") {
         options.put("mark-corresponding-synthetics", "1")
     }
-
     runConfigs.all {
         preferGradleTask = true
         generateRunConfig = true
-        val runtimeSide = if (name.contains("server", ignoreCase = true)) "server" else "client"
-        runDirectory = rootProject.file("run/${sc.current.project}/$runtimeSide")
         jvmArguments.add("-Dmixin.debug.export=true")
+    }
+    runConfigs {
+        named("client") {
+            runDirectory = clientProfile.gameDirectory
+            programArgs("--username", requireNotNull(clientProfile.playerName))
+            clientProfile.requiredJvmArgs.forEach(::vmArg)
+            if (clientProfile.modsDirectory.listFiles()?.isNotEmpty() == true) {
+                vmArg("-Dfabric.addMods=${clientProfile.modsDirectory}")
+            }
+        }
+        create("clientMultiplayer") {
+            client()
+            preferGradleTask = true
+            generateRunConfig = true
+            runDirectory = multiplayerProfile.gameDirectory
+            programArgs("--username", requireNotNull(multiplayerProfile.playerName))
+            multiplayerProfile.requiredJvmArgs.forEach(::vmArg)
+            if (multiplayerProfile.modsDirectory.listFiles()?.isNotEmpty() == true) {
+                vmArg("-Dfabric.addMods=${multiplayerProfile.modsDirectory}")
+            }
+        }
+        named("server") {
+            runDirectory = serverProfile.gameDirectory
+            serverProfile.requiredJvmArgs.forEach(::vmArg)
+        }
     }
 }
 
@@ -62,10 +154,13 @@ sourceSets.main {
 }
 
 tasks {
+    withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
     test {
         useJUnitPlatform()
     }
-
     processResources {
         val props =
             mapOf(
@@ -85,35 +180,23 @@ tasks {
         inputs.properties(props)
         filesMatching("fabric.mod.json") { expand(props) }
     }
-
     named<JavaExec>("runClient") {
-        args(
-            "--graphicsBackend",
-            "VULKAN",
-            "--width",
-            gameWindowWidth.toString(),
-            "--height",
-            gameWindowHeight.toString(),
-        )
-
+        args("--graphicsBackend", "VULKAN", "--width", "2560", "--height", "1440")
         if (runtimeWorld != null) {
             require(runtimeWorld.isNotBlank() && '\r' !in runtimeWorld && '\n' !in runtimeWorld) {
                 "runtime.world must be a non-empty single-line world directory name"
             }
             args("--quickPlaySingleplayer", runtimeWorld)
         }
-        if (runtimeUsername != null) {
-            require(runtimeUsername.matches(Regex("[A-Za-z0-9_]{3,16}"))) {
-                "runtime.username must be a valid Minecraft profile name"
-            }
-            args("--username", runtimeUsername)
-        }
     }
-
-    register<Sync>("collectArtifact") {
+    named<JavaExec>("runClientMultiplayer") {
+        args("--graphicsBackend", "VULKAN", "--width", "2560", "--height", "1440")
+    }
+    register<Sync>("buildAndCollect") {
         group = "build"
-        dependsOn("build")
-        from(loomx.modJar.flatMap { it.archiveFile })
-        into(rootProject.layout.buildDirectory.dir("artifacts/${sc.current.project}"))
+        description = "Builds and collects the Fabric production and sources JARs."
+        from(loomx.modJar.flatMap { it.archiveFile }, loomx.modSourcesJar.flatMap { it.archiveFile })
+        into(rootProject.layout.buildDirectory.dir("libs/${project.property("mod.version")}"))
+        duplicatesStrategy = DuplicatesStrategy.FAIL
     }
 }

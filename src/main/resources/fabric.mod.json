@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "${description}",
+  "authors": [
+    "${authors}"
+  ],
+  "contact": {
+    "homepage": "${homepage}",
+    "sources": "${sources}",
+    "issues": "${issues}"
+  },
+  "license": "${license}",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.recrivenvi.glass.GlassMod"
+    ],
+    "client": [
+      "io.github.recrivenvi.glass.GlassClient"
+    ],
+    "modmenu": [
+      "io.github.recrivenvi.glass.client.GlassModMenu"
+    ]
+  },
+  "mixins": [
+    "glass.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "${loader}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft}",
+    "java": ">=${java}"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
