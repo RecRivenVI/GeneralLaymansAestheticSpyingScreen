@@ -1,0 +1,19 @@
+{
+    "required": true,
+    "package": "io.github.recrivenvi.glass.mixin.client",
+    "compatibilityLevel": "JAVA_17",
+    "client": [
+        "CameraAccessor",
+        "ClientChunkCacheMixin",
+        "ClientLevelMixin",
+        "ClientPacketListenerMixin",
+        "GameRendererMixin",
+        "LevelExtractorMixin",
+        "RenderSectionRegionMixin",
+        "MinecraftRenderTargetAccessor"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    },
+    "refmap": "glass.refmap.json"
+}

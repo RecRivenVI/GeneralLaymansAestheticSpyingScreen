@@ -1,0 +1,40 @@
+{
+    "schemaVersion": 1,
+    "id": "${mod_id}",
+    "version": "${mod_version}",
+    "name": "${mod_name}",
+    "description": "${mod_description}",
+    "authors": [
+        "${mod_authors}"
+    ],
+    "contact": {
+        "homepage": "${mod_homepage}",
+        "sources": "${mod_sources}",
+        "issues": "${mod_issues}"
+    },
+    "license": "${mod_license}",
+    "environment": "${fabric_environment}",
+    "entrypoints": {
+        "main": [
+            "${mod_group}.GlassMod"
+        ],
+        "client": [
+            "${mod_group}.GlassClient"
+        ],
+        "modmenu": [
+            "${mod_group}.client.GlassModMenu"
+        ]
+    },
+    "mixins": [
+        "glass.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=${loader_version}",
+        "fabric-api": ">=${fabric_api_version}",
+        "minecraft": "${minecraft_version}",
+        "java": ">=${java_version}"
+    },
+    "suggests": {
+        "modmenu": "*"
+    }
+}

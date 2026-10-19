@@ -1,54 +1,30 @@
-# Gradle and compiled output
-.gradle/
-**/.gradle/
-/.kotlin/
-**/build/
-/out/
-/libs/
-*.class
-*.hprof
-hs_err_pid*
-replay_pid*
+# 本机配置
+/local.toml
 
-# IDE metadata
+# 构建输出与缓存
+.gradle/
+.kotlin/
+build/
+out/
+__pycache__/
+*.py[cod]
+
+# IDE 文件
 .idea/
 .vscode/
-.fleet/
 *.iml
-*.ipr
-*.iws
-*.launch
 .classpath
 .project
 .settings/
 
-# Minecraft development runtime data
-# Historical old-identity data; active scenarios live under validations.
-/run/
-/run-*/
-**/logs/
-/net/
-crash-reports/
-
-# Local development tools and operating-system files
-/.devtools/
+# 操作系统文件
 .DS_Store
+Desktop.ini
 Thumbs.db
-[Dd]esktop.ini
-$RECYCLE.BIN/
 
-# Logs and temporary files
-*.log
-*.tmp
-*.bak
-*~
-.env
-.env.*
-!.env.example
+# 日常实例
+/instances/**
+!/instances/**/
 
-# Daily instances and machine-specific overrides
-/instances/
-/local.properties
-# Ignore validation data while permitting exact tracked fixture allowlists.
-/validations/*/instance/**
-!/validations/*/instance/**/
+# 验证实例
+/validations/*/instance/

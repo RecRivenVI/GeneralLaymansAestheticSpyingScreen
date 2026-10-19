@@ -1,0 +1,26 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "redstone",
+    "pattern": [
+        "WCW",
+        "WNW",
+        "WRW"
+    ],
+    "key": {
+        "W": {
+            "item": "minecraft:obsidian"
+        },
+        "C": {
+            "item": "minecraft:glass"
+        },
+        "N": {
+            "item": "minecraft:ender_eye"
+        },
+        "R": {
+            "item": "minecraft:redstone"
+        }
+    },
+    "result": {
+        "id": "glass:glass_terminal"
+    }
+}

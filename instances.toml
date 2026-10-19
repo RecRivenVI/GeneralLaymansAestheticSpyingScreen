@@ -1,0 +1,12 @@
+[all]
+memory-max = "4G"
+width = 1920
+height = 1080
+
+[client]
+player-name = "RecRivenVI"
+game-args = ["--graphicsBackend", "VULKAN"]
+
+[client-multiplayer]
+player-name = "CNN_MOYAN"
+game-args = ["--graphicsBackend", "VULKAN"]

@@ -1,0 +1,6 @@
+tool = "runtime_validation"
+targets = ["26.3-neoforge"]
+
+[fixture]
+source = "validations/integration-mcp_alpha/instance/26.3-neoforge/acceptance"
+world = "GLASS MCP fixture"

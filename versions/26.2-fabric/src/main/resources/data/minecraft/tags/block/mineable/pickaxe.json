@@ -1,9 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "glass:glass_terminal",
-    "glass:glass_projector",
-    "glass:glass_extension",
-    "glass:glass_wireless_extension"
-  ]
-}

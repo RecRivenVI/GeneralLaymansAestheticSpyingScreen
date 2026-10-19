@@ -1,0 +1,9 @@
+tool = "runtime_validation"
+targets = ["26.3-neoforge"]
+
+[instances.client]
+memory-max = "4G"
+width = 1920
+height = 1080
+player-name = "RecRivenVI"
+game-args = ["--graphicsBackend", "VULKAN"]

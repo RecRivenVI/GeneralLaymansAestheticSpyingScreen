@@ -1,0 +1,20 @@
+tool = "runtime_validation"
+targets = ["26.3-fabric"]
+scene = "M2"
+
+[instances.client]
+memory-max = "4G"
+width = 1920
+height = 1080
+player-name = "RecRivenVI"
+game-args = ["--graphicsBackend", "VULKAN"]
+
+[instances.client-multiplayer]
+memory-max = "4G"
+width = 1920
+height = 1080
+player-name = "CNN_MOYAN"
+game-args = ["--graphicsBackend", "VULKAN"]
+
+[instances.server]
+memory-max = "4G"

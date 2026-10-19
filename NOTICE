@@ -1,0 +1,11 @@
+G.L.A.S.S. 采用 LGPL-3.0-or-later，见 COPYING 与 COPYING.LESSER。
+模板插件与规范来自 Raven's Mod Template 2.0.2，受 MIT 许可约束，见 licenses/ravens_mod_template-mit.txt。
+
+以下第三方文件未经修改地随仓库分发，保留各自的许可。
+
+Gradle Wrapper
+文件：gradlew、gradlew.bat、gradle/wrapper/gradle-wrapper.jar
+来源：Gradle 9.8.1，https://gradle.org
+版权声明：Copyright 2015 the original author or authors.
+许可：Apache License, Version 2.0，https://www.apache.org/licenses/LICENSE-2.0
+SPDX-License-Identifier: Apache-2.0

@@ -1,40 +1,17 @@
 * text=auto eol=lf
 
-*.java text eol=lf
-*.kt text eol=lf
-*.kts text eol=lf
-*.gradle text eol=lf
-*.properties text eol=lf
-*.toml text eol=lf
-*.json text eol=lf
-*.json5 text eol=lf
-*.mcmeta text eol=lf
-*.lang text eol=lf
-*.cfg text eol=lf
-*.accesswidener text eol=lf
-*.xml text eol=lf
-*.vsh text eol=lf
-*.fsh text eol=lf
-*.glsl text eol=lf
-*.md text eol=lf
-*.ps1 text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.sh text eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
 *.jar binary
-*.zip binary
-*.class binary
-*.ogg binary
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
-*.ico binary
-*.dll binary
-*.lib binary
-*.so binary
-*.xcf binary
-*.blend binary
+*.webp binary
+*.ogg binary
+*.nbt binary
+*.mca binary
+
+# 验证工具写入的结果与证据保持原样，不转换换行符（C-09）。
+validations/*/result/** -text

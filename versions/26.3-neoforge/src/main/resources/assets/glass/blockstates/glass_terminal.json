@@ -1,0 +1,27 @@
+{
+    "variants": {
+        "facing=north": {
+            "model": "glass:block/glass_terminal"
+        },
+        "facing=east": {
+            "model": "glass:block/glass_terminal",
+            "y": 90
+        },
+        "facing=south": {
+            "model": "glass:block/glass_terminal",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "glass:block/glass_terminal",
+            "y": 270
+        },
+        "facing=up": {
+            "model": "glass:block/glass_terminal",
+            "x": 270
+        },
+        "facing=down": {
+            "model": "glass:block/glass_terminal",
+            "x": 90
+        }
+    }
+}

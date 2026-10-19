@@ -1,0 +1,19 @@
+tool = "runtime_validation"
+targets = ["26.3-neoforge"]
+
+[mcp]
+snapshot = "20261019-1245-bfdda69c"
+source-fingerprint = "bfdda69ccda9d29de0857401b1c1af6b7f5a2fea321b4b665cce03c820929554"
+consumer = "glass_template_migration_01a08652"
+
+[profiles.automatic]
+width = 1920
+height = 1080
+master-volume = 0.0
+player-name = "RecRivenVI"
+
+[profiles.acceptance]
+width = 2560
+height = 1440
+master-volume = 0.5
+player-name = "RecRivenVI"
