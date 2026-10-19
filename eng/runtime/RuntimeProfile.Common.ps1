@@ -45,12 +45,18 @@ function Read-RepositoryProfile {
         [Parameter(Mandatory)][ValidateSet('S1', 'S2', 'M1', 'M2')][string]$Profile
     )
 
-    $profileOwner = if ($Role -eq 'SERVER') {
-        'server\dedicated'
-    } else {
-        "client\$($Role.ToLowerInvariant())"
+    $scenario = switch ($Profile) {
+        'S1' { 'regression-clean-session' }
+        'S2' { 'compatibility-client-mods' }
+        'M1' { 'integration-multiplayer-session' }
+        'M2' { 'integration-dedicated-session' }
     }
-    $recordPath = Join-Path $script:RepositoryRoot "run\profiles\$Node\$profileOwner\$($Profile.ToLowerInvariant()).json"
+    $variant = switch ($Role) {
+        'PRIMARY' { 'client' }
+        'SECONDARY' { 'client-multiplayer' }
+        'SERVER' { 'server' }
+    }
+    $recordPath = Join-Path $script:RepositoryRoot "validations/$scenario/task/profiles/$Node/$variant.json"
     if (!(Test-Path -LiteralPath $recordPath -PathType Leaf)) {
         throw "Missing repository-local profile: $recordPath"
     }

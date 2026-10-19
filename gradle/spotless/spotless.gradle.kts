@@ -15,7 +15,7 @@ spotless {
     encoding = Charsets.UTF_8
 
     java {
-        target("src/**/*.java")
+        target("versions/*/src/**/*.java")
         targetExclude("**/build/**", "run/**")
         googleJavaFormat().aosp()
         formatAnnotations()
@@ -23,7 +23,7 @@ spotless {
         endWithNewline()
     }
     kotlinGradle {
-        target("*.gradle.kts", "gradle/**/*.gradle.kts")
+        target("*.gradle.kts", "gradle/**/*.gradle.kts", "versions/**/*.gradle.kts", "buildSrc/**/*.gradle.kts")
         targetExclude("**/build/**")
         ktlint()
         trimTrailingWhitespace()
@@ -47,6 +47,9 @@ spotless {
         targetExclude(
             "**/build/**",
             "run/**",
+            "instances/**",
+            "validations/*/instance/**",
+            "validations/*/result/**",
             ".gradle/**",
             "gradle/wrapper/gradle-wrapper.properties",
         )

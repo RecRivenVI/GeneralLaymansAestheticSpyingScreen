@@ -19,7 +19,7 @@ foreach ($entry in $script:RequiredTestModRegistry.GetEnumerator()) {
         continue
     }
 
-    $cacheDirectory = Join-Path $script:RepositoryRoot 'run\cache\required-test-mods'
+    $cacheDirectory = Join-Path $script:RepositoryRoot 'build\runtime-cache\required-test-mods'
     New-Item -ItemType Directory -Path $cacheDirectory -Force | Out-Null
     $cacheFile = Join-Path $cacheDirectory $entry.Value.File
     if (!(Test-Path -LiteralPath $cacheFile -PathType Leaf)) {

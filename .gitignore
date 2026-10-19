@@ -23,11 +23,8 @@ replay_pid*
 .settings/
 
 # Minecraft development runtime data
-/run/*
-!/run/profiles/
-!/run/profiles/**
-/run/instances/
-/run/cache/
+# Historical old-identity data; active scenarios live under validations.
+/run/
 /run-*/
 **/logs/
 /net/
@@ -48,3 +45,10 @@ $RECYCLE.BIN/
 .env
 .env.*
 !.env.example
+
+# Daily instances and machine-specific overrides
+/instances/
+/local.properties
+# Ignore validation data while permitting exact tracked fixture allowlists.
+/validations/*/instance/**
+!/validations/*/instance/**/

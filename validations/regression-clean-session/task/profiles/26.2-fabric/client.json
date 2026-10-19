@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "node": "26.2-fabric",
+  "profile": "S1",
+  "role": "PRIMARY",
+  "playerName": "RecRivenVI",
+  "resolution": "2560x1440",
+  "gameDirectory": "validations/regression-clean-session/instance/26.2-fabric/client",
+  "modsDirectory": "validations/regression-clean-session/instance/26.2-fabric/client/mods",
+  "requiredJvmArgs": [],
+  "requiredTestMods": [],
+  "compatibilityFixture": []
+}

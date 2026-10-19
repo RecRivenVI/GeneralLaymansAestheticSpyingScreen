@@ -24,68 +24,70 @@ check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
     "The G.L.A.S.S. Stonecutter build must run on JDK 25 or newer; current runtime is ${JavaVersion.current()}."
 }
 
+include(":version")
+// Stonecutter creates <controller>/versions/<target>; use the repository root
+// during creation, then map the namespace descriptor to its physical directory.
+project(":version").projectDir = rootDir
+
+val targets = listOf("1.20.1-forge", "1.21.1-neoforge", "26.1.2-neoforge", "26.2-fabric", "26.2-neoforge")
 stonecutter {
-    val statuses = mutableMapOf<String, String>()
-
-    fun targetStatus(
-        loader: String,
-        version: String,
-    ): String =
-        properties.getOrNull<String>("$loader.$version.target.status")
-            ?: properties.get<String>("target.status")
-
-    create(rootProject) {
-        fun match(
-            project: String,
-            vararg loaders: String,
-            version: String = project,
-        ) {
-            for (loader in loaders) {
-                val target = "$project-$loader"
-                statuses[target] = targetStatus(loader, version)
-                version(target, version).buildscript("build.$loader.gradle.kts")
-            }
+    create("version") {
+        targets.forEach { target ->
+            version(target, target.substringBeforeLast('-')).buildscript("versions/$target/build.gradle.kts")
         }
-
-        match("1.20.1", "forge")
-        match("1.21.1", "neoforge")
-        match("26.1.2", "neoforge")
-        match("26.2", "fabric", "neoforge")
         vcsVersion = "26.2-fabric"
     }
+}
+project(":version").projectDir = file("versions")
+project(":version").buildFileName = "../stonecutter.gradle.kts"
+targets.forEach { target ->
+    project(":version:$target").projectDir = file("versions/$target")
+    project(":version:$target").buildFileName = "build.gradle.kts"
+}
 
-    val maintenance =
-        setOf(
-            "artifactTransforms",
-            "buildEnvironment",
-            "clean",
-            "dependencies",
-            "dependencyInsight",
-            "help",
-            "javaToolchains",
-            "kotlinDslAccessorsReport",
-            "outgoingVariants",
-            "projects",
-            "properties",
-            "resolvableConfigurations",
-            "tasks",
-        )
-    gradle.startParameter.taskNames.forEach { request ->
-        val path = request.split(':').filter(String::isNotBlank)
-        if (path.size != 2) return@forEach
-        val target = path[0]
-        val task = path[1]
-        if (statuses[target] != "planned" || task in maintenance) return@forEach
-
-        val version = target.substringBeforeLast('-')
-        val loader = target.substringAfterLast('-')
+val maintenance =
+    setOf(
+        "artifactTransforms",
+        "buildEnvironment",
+        "clean",
+        "dependencies",
+        "dependencyInsight",
+        "help",
+        "javaToolchains",
+        "kotlinDslAccessorsReport",
+        "outgoingVariants",
+        "projects",
+        "properties",
+        "resolvableConfigurations",
+        "tasks",
+    )
+val unscopedBusiness =
+    setOf(
+        "build",
+        "check",
+        "test",
+        "assemble",
+        "jar",
+        "sourcesJar",
+        "buildAndCollect",
+        "runClient",
+        "runClientMultiplayer",
+        "runServer",
+    )
+gradle.startParameter.taskNames.forEach { request ->
+    val path = request.split(':').filter(String::isNotBlank)
+    if ((path.size == 1 || (path.size == 2 && path[0] == "version")) &&
+        path.last() in unscopedBusiness
+    ) {
         error(
-            "Target '$target' has status 'planned'. Direct task '$request' is blocked during " +
-                "settings evaluation before source generation, compilation, Loader dependency " +
-                "resolution, packaging, or runtime launch. Set [$loader.\"$version\"]" +
-                ".target.status = \"implemented\" only after implementation and qualification.",
+            "Unscoped business task '$request' could select planned targets. Use an explicit :version:26.2-fabric task or root aggregate.",
+        )
+    }
+    val target = if (path.size == 3 && path[0] == "version") path[1] else null
+    if (target in targets && target != "26.2-fabric" && path.last() !in maintenance) {
+        error(
+            "Target '$target' has status 'planned'. Direct task '$request' is blocked before Loader resolution, compilation, packaging or runtime launch.",
         )
     }
 }
-
 rootProject.name = "GLASS"
