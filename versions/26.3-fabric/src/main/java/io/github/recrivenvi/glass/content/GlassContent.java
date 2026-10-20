@@ -14,7 +14,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -31,19 +30,19 @@ public final class GlassContent {
             registerBlock(
                     "glass_projector",
                     GlassProjectorBlock::new,
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.CONCRETE.pick(DyeColor.BLUE)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
 
     public static final Block EXTENSION =
             registerBlock(
                     "glass_extension",
                     GlassExtensionBlock::new,
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.CONCRETE.pick(DyeColor.WHITE)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
 
     public static final Block WIRELESS_EXTENSION =
             registerBlock(
                     "glass_wireless_extension",
                     GlassWirelessExtensionBlock::new,
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.CONCRETE.pick(DyeColor.GREEN)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
 
     public static final SoundEvent AMBIENCE =
             Registry.register(

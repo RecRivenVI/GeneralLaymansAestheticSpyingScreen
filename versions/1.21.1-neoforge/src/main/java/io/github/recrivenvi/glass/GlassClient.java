@@ -28,9 +28,23 @@ public final class GlassClient {
         GlassClientInteraction.initialize();
         bus.addListener(Blaze3DViewRenderer::registerShaders);
         NeoForge.EVENT_BUS.addListener(
-                (ClientTickEvent.Post event) ->
-                        VIEW_RENDERER.replaceViews(
-                                GlassRenderSnapshots.current(Minecraft.getInstance())));
+                (ClientTickEvent.Post event) -> {
+                    io.github.recrivenvi.glass.client.render.GlassBlockInteriors.tick();
+                    VIEW_RENDERER.replaceViews(
+                            GlassRenderSnapshots.current(Minecraft.getInstance()));
+                });
+        NeoForge.EVENT_BUS.addListener(
+                (net.neoforged.neoforge.client.event.RenderLevelStageEvent event) -> {
+                    if (event.getStage()
+                            != net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage
+                                    .AFTER_CUTOUT_BLOCKS) return;
+                    io.github.recrivenvi.glass.client.render.GlassBlockInteriors.draw(event);
+                    if (!VIEW_RENDERER.isChannelExtraction())
+                        VIEW_RENDERER.drawProjector(
+                                event.getModelViewMatrix(),
+                                event.getCamera().getPosition(),
+                                event.getFrustum());
+                });
         NeoForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingOut event) -> {
                     GlassClientState.clear();

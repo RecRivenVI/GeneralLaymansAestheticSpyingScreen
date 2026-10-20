@@ -28,9 +28,11 @@ public final class GlassClient {
         bus.addListener(GlassClientInteraction::initialize);
         bus.addListener(VulkanBlaze3DViewRenderer::registerPipelines);
         NeoForge.EVENT_BUS.addListener(
-                (ClientTickEvent.Post event) ->
-                        VIEW_RENDERER.replaceViews(
-                                GlassRenderSnapshots.current(Minecraft.getInstance())));
+                (ClientTickEvent.Post event) -> {
+                    io.github.recrivenvi.glass.client.render.GlassBlockInteriors.tick();
+                    VIEW_RENDERER.replaceViews(
+                            GlassRenderSnapshots.current(Minecraft.getInstance()));
+                });
         NeoForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingOut event) -> {
                     GlassClientState.clear();

@@ -56,7 +56,13 @@ public final class GlassMigrationProbe {
     private boolean finished;
     private UUID channel;
 
-    public GlassMigrationProbe() {
+    public GlassMigrationProbe(net.neoforged.bus.api.IEventBus bus) {
+        GlassRenderReviewBlocks.register(bus);
+        if (Boolean.getBoolean("glass.probe.models_only")) return;
+        if (Boolean.getBoolean("glass.render.review")) {
+            new GlassRenderReviewProbe();
+            return;
+        }
         evidence.put("target", System.getProperty("validation.target"));
         evidence.put("world", "glass_migration_" + System.currentTimeMillis());
         NeoForge.EVENT_BUS.addListener(this::tick);

@@ -11,6 +11,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererMixin {
+    @Inject(method = "submitBlockEntities", at = @At("RETURN"))
+    private void glass$submitInteriors(
+            com.mojang.blaze3d.vertex.PoseStack pose,
+            net.minecraft.client.renderer.state.level.LevelRenderState state,
+            net.minecraft.client.renderer.SubmitNodeStorage collector,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        io.github.recrivenvi.glass.client.render.GlassBlockInteriors.submit(state, collector);
+    }
+
     @Inject(method = "getTransparencyChain", at = @At("HEAD"), cancellable = true)
     private void glass$avoidSharedChannelPostChain(CallbackInfoReturnable<PostChain> callback) {
         if (!GlassChannelFramePolicy.mayUseSharedPostChains(

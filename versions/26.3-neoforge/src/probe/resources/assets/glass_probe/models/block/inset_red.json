@@ -1,0 +1,41 @@
+{
+    "parent": "minecraft:block/block",
+    "textures": {
+        "particle": "minecraft:block/red_concrete",
+        "all": "minecraft:block/red_concrete"
+    },
+    "elements": [
+        {
+            "from": [
+                0,
+                0,
+                1
+            ],
+            "to": [
+                16,
+                16,
+                17
+            ],
+            "faces": {
+                "up": {
+                    "texture": "#all"
+                },
+                "down": {
+                    "texture": "#all"
+                },
+                "north": {
+                    "texture": "#all"
+                },
+                "south": {
+                    "texture": "#all"
+                },
+                "east": {
+                    "texture": "#all"
+                },
+                "west": {
+                    "texture": "#all"
+                }
+            }
+        }
+    ]
+}

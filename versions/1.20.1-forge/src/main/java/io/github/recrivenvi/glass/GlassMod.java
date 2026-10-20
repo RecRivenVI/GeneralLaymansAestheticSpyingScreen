@@ -10,6 +10,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.ChunkWatchEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -42,6 +43,9 @@ public final class GlassMod {
                     if (event.getLevel() instanceof ServerLevel level)
                         GlassServerState.chunkUnloaded(level, event.getChunk().getPos());
                 });
+        MinecraftForge.EVENT_BUS.addListener(
+                (ChunkWatchEvent.Watch event) ->
+                        GlassServerState.chunkLoaded(event.getLevel(), event.getChunk().getPos()));
         MinecraftForge.EVENT_BUS.addListener(
                 (TickEvent.ServerTickEvent event) -> {
                     if (event.phase == TickEvent.Phase.END)

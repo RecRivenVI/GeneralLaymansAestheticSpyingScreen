@@ -70,6 +70,6 @@
     "glass.config.wireless_min_nodes.tooltip": "投影仪进入无线模式所需绑定的最少节点数。",
     "glass.config.wireless_max_nodes": "无线节点上限",
     "glass.config.wireless_max_nodes.tooltip": "单个投影仪允许绑定的无线扩展上限。",
-    "glass.config.legacy_fade_animation": "原版淡入淡出",
-    "glass.config.legacy_fade_animation.tooltip": "在现代缩放动画上叠加原版白色淡入淡出效果。"
+    "glass.config.legacy_fade_animation": "经典",
+    "glass.config.legacy_fade_animation.tooltip": "关闭时使用默认动画：只缩放，不淡入淡出。开启时使用上游经典动画：面不缩放；开启投影时先变纯白，画面在白底上淡入；关闭投影时画面直接消失，然后白底淡出。"
 }

@@ -515,9 +515,13 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
         CameraAccessor access = (CameraAccessor) camera;
         Vec3 originalPosition = camera.getPosition();
         float yaw = camera.getYRot(), pitch = camera.getXRot();
-        Quaternionf orientation = new Quaternionf(camera.rotation());
+        // 1.20 Camera uses +Z forward; portal math and view matrices use -Z forward.
+        Quaternionf orientation = new Quaternionf(camera.rotation()).rotateY((float) Math.PI);
         Matrix4f projection =
                 new Matrix4f(((GameRendererProjectionAccess) renderer).glass$getLevelProjection());
+        // The first world frame can have an uninitialized FOV. Vanilla uses a separate
+        // culling projection; passing its NaNs into the channel camera-cube loop never terminates.
+        if (!projection.isFinite()) return;
         capturing = true;
         try {
             for (Pair pair : pairs) {
@@ -780,10 +784,11 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
             CameraAccessor camera, float yaw, float pitch, Quaternionf orientation) {
         // 先复用原版入口更新欧拉角元数据并让两个视图矩阵缓存失效，再补上原版入口无法表达的 roll。
         camera.glass$setRotation(yaw, pitch);
-        Quaternionf rotation = camera.glass$getRotation().set(orientation).normalize();
-        camera.glass$getForwards().set(0.0F, 0.0F, -1.0F).rotate(rotation);
+        Quaternionf rotation =
+                camera.glass$getRotation().set(orientation).rotateY((float) Math.PI).normalize();
+        camera.glass$getForwards().set(0.0F, 0.0F, 1.0F).rotate(rotation);
         camera.glass$getUp().set(0.0F, 1.0F, 0.0F).rotate(rotation);
-        camera.glass$getLeft().set(-1.0F, 0.0F, 0.0F).rotate(rotation);
+        camera.glass$getLeft().set(1.0F, 0.0F, 0.0F).rotate(rotation);
     }
 
     @Override

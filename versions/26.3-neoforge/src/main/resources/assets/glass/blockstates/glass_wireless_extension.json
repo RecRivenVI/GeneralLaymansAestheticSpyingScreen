@@ -1,62 +1,7 @@
 {
-    "multipart": [
-        {
-            "apply": {
-                "model": "glass:block/glass_wireless_extension"
-            }
-        },
-        {
-            "when": {
-                "support_north": "true"
-            },
-            "apply": {
-                "model": "glass:block/glass_support_green"
-            }
-        },
-        {
-            "when": {
-                "support_east": "true"
-            },
-            "apply": {
-                "model": "glass:block/glass_support_green",
-                "y": 90
-            }
-        },
-        {
-            "when": {
-                "support_south": "true"
-            },
-            "apply": {
-                "model": "glass:block/glass_support_green",
-                "y": 180
-            }
-        },
-        {
-            "when": {
-                "support_west": "true"
-            },
-            "apply": {
-                "model": "glass:block/glass_support_green",
-                "y": 270
-            }
-        },
-        {
-            "when": {
-                "support_up": "true"
-            },
-            "apply": {
-                "model": "glass:block/glass_support_green",
-                "x": 270
-            }
-        },
-        {
-            "when": {
-                "support_down": "true"
-            },
-            "apply": {
-                "model": "glass:block/glass_support_green",
-                "x": 90
-            }
+    "variants": {
+        "": {
+            "model": "glass:block/glass_wireless_extension"
         }
-    ]
+    }
 }

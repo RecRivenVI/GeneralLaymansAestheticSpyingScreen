@@ -32,6 +32,38 @@ final class GlassProjectionCompositor implements AutoCloseable {
     static final Pipeline SURFACE_PIPELINE = Pipeline.SURFACE;
     static final Pipeline WIRELESS_PIPELINE = Pipeline.WIRELESS;
     private static ShaderInstance shader;
+    private static final net.minecraft.client.renderer.RenderType SURFACE_LAYER =
+            createLayer("glass_surface", VertexFormat.Mode.QUADS);
+    private static final net.minecraft.client.renderer.RenderType WIRELESS_LAYER =
+            createLayer("glass_wireless", VertexFormat.Mode.TRIANGLES);
+
+    private static net.minecraft.client.renderer.RenderType createLayer(
+            String name, VertexFormat.Mode mode) {
+        return net.minecraft.client.renderer.RenderType.create(
+                name,
+                DefaultVertexFormat.POSITION_COLOR,
+                mode,
+                16384,
+                false,
+                false,
+                net.minecraft.client.renderer.RenderType.CompositeState.builder()
+                        .setShaderState(
+                                new net.minecraft.client.renderer.RenderStateShard.ShaderStateShard(
+                                        () -> shader))
+                        .setTransparencyState(
+                                net.minecraft.client.renderer.RenderStateShard
+                                        .TRANSLUCENT_TRANSPARENCY)
+                        .setDepthTestState(
+                                net.minecraft.client.renderer.RenderStateShard.LEQUAL_DEPTH_TEST)
+                        .setCullState(net.minecraft.client.renderer.RenderStateShard.NO_CULL)
+                        .setWriteMaskState(
+                                net.minecraft.client.renderer.RenderStateShard.COLOR_DEPTH_WRITE)
+                        .setLayeringState(
+                                net.minecraft.client.renderer.RenderStateShard
+                                        .POLYGON_OFFSET_LAYERING)
+                        .createCompositeState(false));
+    }
+
     private final GlassStagedVertexBuffer buffer =
             new GlassStagedVertexBuffer(() -> "GLASS composites", 16384);
 
@@ -80,8 +112,10 @@ final class GlassProjectionCompositor implements AutoCloseable {
                 dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
         int srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA),
                 dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+        var layer = pipeline == Pipeline.SURFACE ? SURFACE_LAYER : WIRELESS_LAYER;
         try {
             client.getMainRenderTarget().bindWrite(true);
+            layer.setupRenderState();
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             RenderSystem.enableDepthTest();
@@ -94,6 +128,7 @@ final class GlassProjectionCompositor implements AutoCloseable {
             BufferUploader.drawWithShader(draw.mesh);
             draw.mesh = null;
         } finally {
+            layer.clearRenderState();
             RenderSystem.setShaderColor(
                     previousColor[0], previousColor[1], previousColor[2], previousColor[3]);
             RenderSystem.setShader(() -> previousShader);

@@ -1,7 +1,0 @@
-{
-    "parent": "glass:block/glass_support_white",
-    "textures": {
-        "particle": "minecraft:block/green_concrete",
-        "all": "minecraft:block/green_concrete"
-    }
-}

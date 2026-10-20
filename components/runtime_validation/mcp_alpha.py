@@ -132,7 +132,7 @@ def allowed(rules):
     return result
 
 
-def install():
+def install(*, assets_directory=None):
     snapshot()
     quota()
     RESULT.mkdir(parents=True, exist_ok=True)
@@ -155,25 +155,47 @@ def install():
         artifact["sha1"],
         [GRADLE / "neoformruntime/artifacts" / f"minecraft_{MC}_client.jar"],
     )
-    assert LOADER == "neoforge"
+    assert LOADER in ("neoforge", "forge")
     loader_version = facts["loader_version"]
-    profile_id = "neoforge-" + loader_version
+    distribution_version = (
+        MC + "-" + loader_version if LOADER == "forge" else loader_version
+    )
+    profile_id = (
+        MC + "-forge-" + loader_version
+        if LOADER == "forge"
+        else "neoforge-" + loader_version
+    )
     profile_path = HOME / "versions" / profile_id / (profile_id + ".json")
     if not (HOME / "installed_ok.json").exists():
+        repository = (
+            "https://maven.minecraftforge.net/net/minecraftforge/forge/"
+            if LOADER == "forge"
+            else "https://maven.neoforged.net/releases/net/neoforged/neoforge/"
+        )
         url = (
-            "https://maven.neoforged.net/releases/net/neoforged/neoforge/"
-            + loader_version
-            + "/neoforge-"
-            + loader_version
+            repository
+            + distribution_version
+            + "/"
+            + LOADER
+            + "-"
+            + distribution_version
             + "-installer.jar"
         )
-        with urllib.request.urlopen(url + ".sha1", timeout=60) as response:
-            checksum = response.read().decode().strip().split()[0]
+        checksum = (
+            fetch(
+                url + ".sha1", CACHE / (LOADER + "-" + distribution_version + ".sha1")
+            )
+            .read_text("utf-8")
+            .strip()
+            .split()[0]
+        )
         installer = fetch(
-            url, CACHE / ("neoforge-" + loader_version + "-installer.jar"), checksum
+            url,
+            CACHE / (LOADER + "-" + distribution_version + "-installer.jar"),
+            checksum,
         )
         write_json(HOME / "launcher_profiles.json", {"profiles": {}, "settings": {}})
-        print("Installing official NeoForge " + loader_version, flush=True)
+        print("Installing official " + LOADER + " " + loader_version, flush=True)
         with (RESULT / "installer.log").open("w", encoding="utf-8") as log:
             subprocess.run(
                 [
@@ -190,6 +212,9 @@ def install():
                 timeout=600,
                 check=True,
             )
+        assert profile_path.is_file(), (
+            "Official installer did not produce its profile; inspect installer.log"
+        )
         write_json(HOME / "installed_ok.json", {"loaderVersion": loader_version})
     profile = json.loads(profile_path.read_text("utf-8"))
     libraries = {}
@@ -238,7 +263,7 @@ def install():
                             archive.read(name)
                         )
     index = vanilla["assetIndex"]
-    assets = CACHE / "assets"
+    assets = assets_directory or CACHE / "assets"
     asset_index = get_json(
         index["url"],
         assets / "indexes" / (index["id"] + ".json"),
@@ -361,7 +386,16 @@ def prepare(role):
     return directory
 
 
-def launch(role, directory, *, world=None, result_directory=None, extra_scopes=()):
+def launch(
+    role,
+    directory,
+    *,
+    world=None,
+    result_directory=None,
+    extra_scopes=(),
+    jvm_args=(),
+    graphics_backend="VULKAN",
+):
     data = json.loads((CACHE / "launch.json").read_text("utf-8"))
     profile, vanilla = data["profile"], data["vanilla"]
     preset = CONFIG["profiles"]["acceptance" if role == "acceptance" else "automatic"]
@@ -403,6 +437,7 @@ def launch(role, directory, *, world=None, result_directory=None, extra_scopes=(
         return out
 
     args = [str(java()), "-Xms512M", "-Xmx4G", "-Dminecraft.protocol.probe.port=0"]
+    args += jvm_args
     args += arguments(vanilla["arguments"]["jvm"] + profile["arguments"].get("jvm", []))
     args += [profile["mainClass"]]
     args += arguments(
@@ -413,9 +448,9 @@ def launch(role, directory, *, world=None, result_directory=None, extra_scopes=(
         str(preset["width"]),
         "--height",
         str(preset["height"]),
-        "--graphicsBackend",
-        "VULKAN",
     ]
+    if graphics_backend is not None:
+        args += ["--graphicsBackend", graphics_backend]
     if world is not None or role == "acceptance":
         args += ["--quickPlaySingleplayer", world or "GLASS MCP fixture"]
     env = os.environ.copy()

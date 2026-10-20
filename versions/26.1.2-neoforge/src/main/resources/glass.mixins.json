@@ -15,7 +15,8 @@
         "LevelRendererMixin",
         "RenderSectionRegionMixin",
         "ShaderManagerMixin",
-        "MinecraftRenderTargetAccessor"
+        "MinecraftRenderTargetAccessor",
+        "SectionRenderDispatcherMixin"
     ],
     "injectors": {
         "defaultRequire": 1

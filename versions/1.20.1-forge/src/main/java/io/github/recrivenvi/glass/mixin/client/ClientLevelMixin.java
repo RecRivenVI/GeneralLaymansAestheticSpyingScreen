@@ -25,6 +25,8 @@ public abstract class ClientLevelMixin {
     private void glass$forwardBlockStateChanged(
             BlockPos pos, BlockState oldState, BlockState newState, CallbackInfo callback) {
         GlassClient.VIEW_RENDERER.blockStateChanged(pos, oldState, newState);
+        io.github.recrivenvi.glass.client.render.GlassBlockInteriors.blockChanged(
+                (ClientLevel) (Object) this, pos, newState);
     }
 
     @Inject(method = "setSectionDirtyWithNeighbors", at = @At("TAIL"))

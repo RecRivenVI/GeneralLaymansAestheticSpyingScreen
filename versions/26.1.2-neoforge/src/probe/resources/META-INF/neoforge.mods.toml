@@ -1,0 +1,15 @@
+license = "${mod_license}"
+
+[[mods]]
+modId = "${mod_id}_probe"
+version = "${mod_version}"
+displayName = "${mod_name} verification"
+authors = "${mod_authors}"
+description = "GLASS migration runtime verification"
+
+[[dependencies.${mod_id}_probe]]
+modId = "${mod_id}"
+type = "required"
+versionRange = "[${mod_version}]"
+ordering = "AFTER"
+side = "CLIENT"

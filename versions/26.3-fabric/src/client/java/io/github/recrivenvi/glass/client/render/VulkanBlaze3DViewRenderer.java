@@ -79,6 +79,7 @@ public final class VulkanBlaze3DViewRenderer implements GlassViewRenderer {
             new HashMap<>();
     private ClientLevel observedLevel;
     private boolean capturing;
+    private final ArrayList<PendingDraw> pendingTextures = new ArrayList<>();
     private final GlassChannelSnapshotIdentity channelSnapshotIdentity =
             new GlassChannelSnapshotIdentity();
 
@@ -942,7 +943,7 @@ public final class VulkanBlaze3DViewRenderer implements GlassViewRenderer {
     }
 
     @Override
-    public void drawProjector(LevelRenderState levelState) {
+    public void prepareProjector(LevelRenderState levelState) {
         Minecraft client = Minecraft.getInstance();
         if (capturing || client.level == null) {
             return;
@@ -955,7 +956,7 @@ public final class VulkanBlaze3DViewRenderer implements GlassViewRenderer {
                         .filter(pair -> isNetworkVisible(pair.projector().network(), mainFrustum))
                         .toList();
 
-        ArrayList<PendingDraw> pendingTextures = new ArrayList<>();
+        pendingTextures.clear();
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(levelState.cameraRenderState.viewRotationMatrix);
         Vec3 camera = levelState.cameraRenderState.pos;
@@ -998,11 +999,7 @@ public final class VulkanBlaze3DViewRenderer implements GlassViewRenderer {
 
         if (!pendingTextures.isEmpty()) {
             compositor.upload();
-            for (PendingDraw draw : pendingTextures) {
-                compositor.draw(client, draw.pipeline(), draw.target(), draw.draw());
-            }
         }
-        compositor.endFrame();
         surfaceTransitions.entrySet().removeIf(entry -> entry.getValue().finished(now));
         wirelessTransitions.entrySet().removeIf(entry -> entry.getValue().finished(now));
         channelSwitchAnimations
@@ -1014,6 +1011,19 @@ public final class VulkanBlaze3DViewRenderer implements GlassViewRenderer {
                             return true;
                         });
         exitPlaneCullingOverrides.values().removeIf(override -> !override.active(now));
+    }
+
+    @Override
+    public void drawProjector(com.mojang.renderpearl.api.commands.RenderPass pass) {
+        for (PendingDraw draw : pendingTextures) {
+            compositor.draw(pass, draw.pipeline(), draw.target(), draw.draw());
+        }
+    }
+
+    @Override
+    public void endProjectorFrame() {
+        compositor.endFrame();
+        pendingTextures.clear();
     }
 
     private void appendOutgoingChannels(

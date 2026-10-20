@@ -22,3 +22,8 @@ afterEvaluate {
 tasks.test {
     systemProperty("glass.test.resources", sourceSets.main.get().output.resourcesDir!!.absolutePath)
 }
+
+tasks.register<Jar>("probeJar") {
+    archiveClassifier.set("probe")
+    from(provider { sourceSets["probe"].output })
+}

@@ -37,12 +37,12 @@ def quota():
     local = ROOT / "local.toml"
     if local.exists():
         inputs = tomllib.loads(local.read_text(encoding="utf-8")).get("inputs", {})
-        if "mcp_alpha" in inputs:
-            size += sum(
-                p.stat().st_size
-                for p in pathlib.Path(inputs["mcp_alpha"]).parent.iterdir()
-                if p.is_file()
-            )
+        for directory in {
+            pathlib.Path(value).parent
+            for name, value in inputs.items()
+            if name.startswith("mcp_")
+        }:
+            size += sum(p.stat().st_size for p in directory.iterdir() if p.is_file())
         if "customskinloader_acceptance" in inputs:
             path = pathlib.Path(inputs["customskinloader_acceptance"])
             if path.is_file():

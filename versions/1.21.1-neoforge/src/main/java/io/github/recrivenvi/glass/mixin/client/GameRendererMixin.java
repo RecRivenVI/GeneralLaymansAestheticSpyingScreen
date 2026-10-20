@@ -42,6 +42,5 @@ public abstract class GameRendererMixin implements GameRendererProjectionAccess 
         glass$levelProjection.set(projection);
         GlassClient.VIEW_RENDERER.capture(delta);
         level.renderLevel(delta, outline, camera, game, light, view, projection);
-        GlassClient.VIEW_RENDERER.drawProjector(view, camera.getPosition(), level.getFrustum());
     }
 }

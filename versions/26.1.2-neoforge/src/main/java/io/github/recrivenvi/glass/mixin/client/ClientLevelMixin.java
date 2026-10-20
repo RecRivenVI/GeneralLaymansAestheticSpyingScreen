@@ -25,6 +25,8 @@ public abstract class ClientLevelMixin {
     private void glass$forwardBlockStateChanged(
             BlockPos pos, BlockState oldState, BlockState newState, CallbackInfo callback) {
         GlassClient.VIEW_RENDERER.blockStateChanged(pos, oldState, newState);
+        io.github.recrivenvi.glass.client.render.GlassBlockInteriors.blockChanged(
+                (ClientLevel) (Object) this, pos, newState);
     }
 
     @Inject(method = "setSectionDirtyWithNeighbors", at = @At("TAIL"))
@@ -44,11 +46,5 @@ public abstract class ClientLevelMixin {
             CallbackInfo callback) {
         GlassClient.VIEW_RENDERER.setSectionRangeDirty(
                 minSectionX, minSectionY, minSectionZ, maxSectionX, maxSectionY, maxSectionZ);
-    }
-
-    @Inject(method = "onChunkLoaded", at = @At("TAIL"))
-    private void glass$forwardChunkLoaded(
-            net.minecraft.world.level.ChunkPos pos, CallbackInfo callback) {
-        GlassClient.VIEW_RENDERER.chunkLoaded(pos);
     }
 }

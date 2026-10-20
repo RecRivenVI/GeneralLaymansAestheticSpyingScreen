@@ -10,7 +10,8 @@
         "GameRendererMixin",
         "LevelExtractorMixin",
         "RenderSectionRegionMixin",
-        "MinecraftRenderTargetAccessor"
+        "MinecraftRenderTargetAccessor",
+        "SectionRenderDispatcherMixin"
     ],
     "injectors": {
         "defaultRequire": 1

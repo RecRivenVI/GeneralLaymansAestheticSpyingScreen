@@ -16,7 +16,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class RenderSectionRegionMixin {
     @Unique private boolean glass$channelSnapshot;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
+    @Inject(
+            method =
+                    "<init>(Lnet/minecraft/world/level/Level;II[Lnet/minecraft/client/renderer/chunk/RenderChunk;Lit/unimi/dsi/fastutil/longs/Long2ObjectFunction;)V",
+            at = @At("RETURN"))
     private void glass$rememberChannelSnapshot(CallbackInfo callback) {
         // 区块网格可能在后台线程稍后编译，必须把频道身份固化在快照本身，不能在
         // getBlockState 时读取一帧即逝的 extractingChannel 标志。

@@ -26,7 +26,8 @@
         ]
     },
     "mixins": [
-        "glass.mixins.json"
+        "glass.mixins.json",
+        "glass.server.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=${loader_version}",

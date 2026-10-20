@@ -11,6 +11,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.level.ChunkWatchEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -40,6 +41,9 @@ public final class GlassMod {
                     if (event.getLevel() instanceof ServerLevel level)
                         GlassServerState.chunkUnloaded(level, event.getChunk().getPos());
                 });
+        NeoForge.EVENT_BUS.addListener(
+                (ChunkWatchEvent.Sent event) ->
+                        GlassServerState.chunkLoaded(event.getLevel(), event.getPos()));
         NeoForge.EVENT_BUS.addListener(
                 (ServerTickEvent.Post event) -> GlassServerState.tick(event.getServer()));
         NeoForge.EVENT_BUS.addListener(

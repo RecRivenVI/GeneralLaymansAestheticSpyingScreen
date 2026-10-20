@@ -39,9 +39,23 @@ public final class GlassClient {
                                         (client, parent) -> new GlassConfigScreen(parent)));
         MinecraftForge.EVENT_BUS.addListener(
                 (TickEvent.ClientTickEvent tick) -> {
-                    if (tick.phase == TickEvent.Phase.END)
+                    if (tick.phase == TickEvent.Phase.END) {
+                        io.github.recrivenvi.glass.client.render.GlassBlockInteriors.tick();
                         VIEW_RENDERER.replaceViews(
                                 GlassRenderSnapshots.current(Minecraft.getInstance()));
+                    }
+                });
+        MinecraftForge.EVENT_BUS.addListener(
+                (net.minecraftforge.client.event.RenderLevelStageEvent stage) -> {
+                    if (stage.getStage()
+                            != net.minecraftforge.client.event.RenderLevelStageEvent.Stage
+                                    .AFTER_CUTOUT_BLOCKS) return;
+                    io.github.recrivenvi.glass.client.render.GlassBlockInteriors.draw(stage);
+                    if (!VIEW_RENDERER.isChannelExtraction())
+                        VIEW_RENDERER.drawProjector(
+                                stage.getPoseStack().last().pose(),
+                                stage.getCamera().getPosition(),
+                                stage.getFrustum());
                 });
         MinecraftForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingOut logout) -> {

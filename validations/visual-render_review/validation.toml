@@ -1,0 +1,24 @@
+tool = "runtime_validation"
+targets = ["26.3-neoforge", "26.3-fabric", "26.1.2-neoforge", "1.21.1-neoforge", "1.20.1-forge"]
+
+[mcp]
+input = "mcp_render_review"
+snapshot = "20261020-0422-52bc024f"
+source-fingerprint = "52bc024f38e8a93e39fb0059b5e097725e079394554b2861d9de99a8b40a06df"
+consumer = "glass_product_a_01a08652"
+
+[fixture]
+world = "GLASS Render Review"
+source = "validations/integration-mcp_alpha/instance/26.3-neoforge/reference/saves/GLASS MCP fixture"
+
+[profiles.automatic]
+width = 1920
+height = 1080
+master-volume = 0.0
+player-name = "RecRivenVI"
+
+[profiles.acceptance]
+width = 2560
+height = 1440
+master-volume = 0.5
+player-name = "RecRivenVI"

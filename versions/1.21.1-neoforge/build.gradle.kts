@@ -26,3 +26,8 @@ tasks.test {
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-Xmaxerrs", "1000"))
 }
+
+tasks.register<Jar>("probeJar") {
+    archiveClassifier.set("probe")
+    from(provider { sourceSets["probe"].output })
+}

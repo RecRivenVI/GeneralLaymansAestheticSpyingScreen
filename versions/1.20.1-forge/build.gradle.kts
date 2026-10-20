@@ -28,3 +28,18 @@ tasks.test {
     workingDir(testDirectory)
     doFirst { testDirectory.get().asFile.mkdirs() }
 }
+
+val overlayProbeJar =
+    tasks.register<Jar>("namedProbeJar") {
+        archiveClassifier.set("probe-dev")
+        from(provider { sourceSets["probe"].output })
+    }
+
+tasks.register<net.neoforged.moddevgradle.legacyforge.tasks.RemapJar>("probeJar") {
+    archiveClassifier.set("probe")
+    input.set(overlayProbeJar.flatMap { it.archiveFile })
+    libraries.from(provider { sourceSets["probe"].compileClasspath })
+    project.extensions
+        .getByType<net.neoforged.moddevgradle.legacyforge.dsl.ObfuscationExtension>()
+        .configureNamedToSrgOperation(remapOperation)
+}

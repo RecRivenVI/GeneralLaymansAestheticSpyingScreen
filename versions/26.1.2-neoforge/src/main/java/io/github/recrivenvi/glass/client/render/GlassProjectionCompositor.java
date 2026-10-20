@@ -69,10 +69,9 @@ final class GlassProjectionCompositor implements AutoCloseable {
         GpuBufferSlice transforms =
                 RenderSystem.getDynamicUniforms()
                         .writeTransform(
-                                new Matrix4f(RenderSystem.getModelViewStack()),
-                                COLOR_MODULATOR,
-                                MODEL_OFFSET,
-                                TEXTURE_MATRIX);
+                                // Composite vertices already contain the view rotation; this hook
+                                // runs inside the native view stack.
+                                new Matrix4f(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
         try (RenderPass pass =
                 RenderSystem.getDevice()
                         .createCommandEncoder()
@@ -112,7 +111,12 @@ final class GlassProjectionCompositor implements AutoCloseable {
                 .withFragmentShader(GlassContent.id("core/glass_projective"))
                 .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, topology)
                 .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                .withDepthStencilState(DepthStencilState.DEFAULT)
+                .withDepthStencilState(
+                        new DepthStencilState(
+                                com.mojang.blaze3d.platform.CompareOp.LESS_THAN_OR_EQUAL,
+                                true,
+                                -1F,
+                                -1F))
                 .withCull(false)
                 .build();
     }

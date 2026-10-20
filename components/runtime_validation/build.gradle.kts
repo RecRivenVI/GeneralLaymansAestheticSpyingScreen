@@ -32,6 +32,7 @@ val formatPython =
             layout.projectDirectory.file("runtime_validation.py").asFile,
             layout.projectDirectory.file("mcp_alpha.py").asFile,
             layout.projectDirectory.file("native_gui.py").asFile,
+            layout.projectDirectory.file("render_review.py").asFile,
         )
     }
 val checkPython =
@@ -44,6 +45,7 @@ val checkPython =
             layout.projectDirectory.file("runtime_validation.py").asFile,
             layout.projectDirectory.file("mcp_alpha.py").asFile,
             layout.projectDirectory.file("native_gui.py").asFile,
+            layout.projectDirectory.file("render_review.py").asFile,
         )
     }
 
@@ -107,4 +109,14 @@ tasks.register<Exec>("launchGuiAcceptance") {
     mustRunAfter("verifyNativeGui")
     workingDir(repository)
     commandLine("python", "components/runtime_validation/native_gui.py", "acceptance")
+}
+
+tasks.register<Exec>("verifyRenderReview") {
+    workingDir(repository)
+    commandLine("python", "components/runtime_validation/render_review.py", "verify")
+}
+
+tasks.register<Exec>("launchRenderAcceptance") {
+    workingDir(repository)
+    commandLine("python", "components/runtime_validation/render_review.py", "acceptance")
 }

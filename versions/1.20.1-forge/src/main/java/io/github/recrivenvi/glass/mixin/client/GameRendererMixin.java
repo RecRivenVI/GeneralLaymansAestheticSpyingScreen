@@ -43,7 +43,5 @@ public abstract class GameRendererMixin implements GameRendererProjectionAccess 
         GlassClient.VIEW_RENDERER.capture(partialTick, finishNanoTime);
         level.renderLevel(
                 pose, partialTick, finishNanoTime, outline, camera, game, light, projection);
-        GlassClient.VIEW_RENDERER.drawProjector(
-                pose.last().pose(), camera.getPosition(), level.getFrustum());
     }
 }

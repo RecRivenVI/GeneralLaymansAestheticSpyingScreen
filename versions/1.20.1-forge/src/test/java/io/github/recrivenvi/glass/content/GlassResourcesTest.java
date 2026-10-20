@@ -11,10 +11,6 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 class GlassResourcesTest {
-    static {
-        io.github.recrivenvi.glass.ForgeTestBootstrap.initialize();
-    }
-
     private static final String MOD_ID = "glass";
 
     @Test
@@ -63,110 +59,20 @@ class GlassResourcesTest {
     }
 
     @Test
-    void modernSurfaceModelsAndConcreteStyleDropsArePackaged() {
-        JsonObject projectorState =
-                resource("assets/" + MOD_ID + "/blockstates/glass_projector.json");
-        JsonObject extensionState =
-                resource("assets/" + MOD_ID + "/blockstates/glass_extension.json");
-        assertEquals(24, projectorState.getAsJsonArray("multipart").size());
-        assertEquals(13, extensionState.getAsJsonArray("multipart").size());
-        assertEquals(
-                7,
-                resource("assets/" + MOD_ID + "/blockstates/glass_wireless_extension.json")
-                        .getAsJsonArray("multipart")
-                        .size());
-
-        assertModelElement("glass_projector", "minecraft:block/blue_concrete", 4, 4, 4, 12, 12, 12);
-        assertModelElement(
-                "glass_extension", "minecraft:block/white_concrete", 4, 4, 4, 12, 12, 12);
-        assertModelElement(
-                "glass_wireless_extension", "minecraft:block/green_concrete", 4, 4, 4, 12, 12, 12);
-        assertModelElement("glass_terminal", "minecraft:block/black_concrete", 4, 4, 4, 12, 12, 12);
-        assertSixWayDirectionalState(projectorState, true);
-        assertSixWayDirectionalState(
-                resource("assets/" + MOD_ID + "/blockstates/glass_terminal.json"), false);
-        assertModelDimensions(
-                "glass_connection", "minecraft:block/white_concrete", java.util.List.of(4, 6, 6));
-        assertModelDimensions(
-                "glass_support_white",
-                "minecraft:block/white_concrete",
-                java.util.List.of(4, 6, 6));
-        assertEquals(
-                "minecraft:block/blue_concrete",
-                resource("assets/" + MOD_ID + "/models/block/glass_support_blue.json")
-                        .getAsJsonObject("textures")
-                        .get("all")
-                        .getAsString());
-        assertEquals(
-                "minecraft:block/green_concrete",
-                resource("assets/" + MOD_ID + "/models/block/glass_support_green.json")
-                        .getAsJsonObject("textures")
-                        .get("all")
-                        .getAsString());
-        assertTrue(
-                projectorState.getAsJsonArray("multipart").asList().stream()
-                        .map(value -> value.getAsJsonObject().getAsJsonObject("when"))
-                        .filter(java.util.Objects::nonNull)
-                        .anyMatch(
-                                when ->
-                                        when.has("north")
-                                                && when.get("north").getAsString().equals("support")
-                                                && when.has("facing")
-                                                && when.get("facing")
-                                                        .getAsString()
-                                                        .equals("north")));
-
+    void upstreamFullCubesUseVanillaGlassAndObsidian() {
         for (String block :
-                new String[] {"glass_projector", "glass_extension", "glass_wireless_extension"}) {
-            JsonObject pool =
-                    resource("data/" + MOD_ID + "/loot_tables/blocks/" + block + ".json")
-                            .getAsJsonArray("pools")
-                            .get(0)
-                            .getAsJsonObject();
-            assertFalse(pool.has("conditions"), block);
+                new String[] {
+                    "glass_projector",
+                    "glass_extension",
+                    "glass_wireless_extension",
+                    "glass_terminal"
+                }) {
+            JsonObject model = resource("assets/" + MOD_ID + "/models/block/" + block + ".json");
+            assertEquals("minecraft:block/cube_all", model.get("parent").getAsString());
+            assertEquals(
+                    "minecraft:block/" + (block.equals("glass_terminal") ? "obsidian" : "glass"),
+                    model.getAsJsonObject("textures").get("all").getAsString());
         }
-    }
-
-    private static void assertSixWayDirectionalState(JsonObject state, boolean multipart) {
-        java.util.Set<String> facings = new java.util.HashSet<>();
-        if (multipart) {
-            state.getAsJsonArray("multipart")
-                    .forEach(
-                            value -> {
-                                JsonObject entry = value.getAsJsonObject();
-                                if (entry.has("when")
-                                        && entry.getAsJsonObject("when").has("facing")) {
-                                    java.util.Collections.addAll(
-                                            facings,
-                                            entry.getAsJsonObject("when")
-                                                    .get("facing")
-                                                    .getAsString()
-                                                    .split("\\|"));
-                                }
-                            });
-        } else {
-            state.getAsJsonObject("variants")
-                    .keySet()
-                    .forEach(key -> facings.add(key.substring("facing=".length())));
-        }
-        assertEquals(java.util.Set.of("north", "east", "south", "west", "up", "down"), facings);
-    }
-
-    @Test
-    void terminalUsesBlackCoreAndGreenFrontMarker() {
-        JsonObject model = resource("assets/" + MOD_ID + "/models/block/glass_terminal.json");
-        assertEquals(
-                "minecraft:block/black_concrete",
-                model.getAsJsonObject("textures").get("all").getAsString());
-        assertEquals(
-                "minecraft:block/green_concrete",
-                model.getAsJsonObject("textures").get("marker").getAsString());
-        assertEquals(
-                java.util.List.of(5, 5, 3),
-                coordinates(model.getAsJsonArray("elements").get(1).getAsJsonObject(), "from"));
-        assertEquals(
-                java.util.List.of(11, 11, 4),
-                coordinates(model.getAsJsonArray("elements").get(1).getAsJsonObject(), "to"));
     }
 
     @Test
@@ -180,7 +86,7 @@ class GlassResourcesTest {
                         .getClassLoader()
                         .getResource("assets/" + MOD_ID + "/textures/gui/wireless_order.png"));
         JsonObject model = resource("assets/" + MOD_ID + "/models/item/glass_projector.json");
-        assertEquals(MOD_ID + ":block/glass_projector", model.get("parent").getAsString());
+        assertEquals(4, model.getAsJsonArray("elements").size());
     }
 
     @Test
@@ -215,60 +121,6 @@ class GlassResourcesTest {
                 assertFalse(translations.get(key).getAsString().isBlank(), language + ":" + key);
             }
         }
-    }
-
-    private void assertModelElement(
-            String modelName,
-            String texture,
-            int minX,
-            int minY,
-            int minZ,
-            int maxX,
-            int maxY,
-            int maxZ) {
-        JsonObject model = resource("assets/" + MOD_ID + "/models/block/" + modelName + ".json");
-        assertEquals(texture, model.getAsJsonObject("textures").get("all").getAsString());
-        JsonObject element = model.getAsJsonArray("elements").get(0).getAsJsonObject();
-        assertEquals(java.util.List.of(minX, minY, minZ), coordinates(element, "from"));
-        assertEquals(java.util.List.of(maxX, maxY, maxZ), coordinates(element, "to"));
-        java.util.List<Integer> expectedUv = java.util.List.of(4, 4, 12, 12);
-        element.getAsJsonObject("faces")
-                .entrySet()
-                .forEach(
-                        entry ->
-                                assertEquals(
-                                        expectedUv,
-                                        entry
-                                                .getValue()
-                                                .getAsJsonObject()
-                                                .getAsJsonArray("uv")
-                                                .asList()
-                                                .stream()
-                                                .map(value -> value.getAsInt())
-                                                .toList(),
-                                        modelName + ":" + entry.getKey()));
-    }
-
-    private void assertModelDimensions(
-            String name, String texture, java.util.List<Integer> dimensions) {
-        JsonObject model = resource("assets/" + MOD_ID + "/models/block/" + name + ".json");
-        assertEquals(texture, model.getAsJsonObject("textures").get("all").getAsString());
-        JsonObject element = model.getAsJsonArray("elements").get(0).getAsJsonObject();
-        java.util.List<Integer> from = coordinates(element, "from");
-        java.util.List<Integer> to = coordinates(element, "to");
-        assertEquals(
-                dimensions,
-                java.util.stream.IntStream.range(0, 3)
-                        .map(index -> to.get(index) - from.get(index))
-                        .boxed()
-                        .sorted()
-                        .toList());
-    }
-
-    private static java.util.List<Integer> coordinates(JsonObject element, String member) {
-        return element.getAsJsonArray(member).asList().stream()
-                .map(value -> value.getAsInt())
-                .toList();
     }
 
     private JsonObject resource(String path) {

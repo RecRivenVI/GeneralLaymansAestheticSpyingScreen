@@ -17,7 +17,10 @@ public final class GlassClient implements ClientModInitializer {
     public void onInitializeClient() {
         GlassClientInteraction.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(
-                client -> VIEW_RENDERER.replaceViews(GlassRenderSnapshots.current(client)));
+                client -> {
+                    io.github.recrivenvi.glass.client.render.GlassBlockInteriors.tick();
+                    VIEW_RENDERER.replaceViews(GlassRenderSnapshots.current(client));
+                });
         ClientPlayConnectionEvents.DISCONNECT.register(
                 (handler, client) -> {
                     GlassClientState.clear();

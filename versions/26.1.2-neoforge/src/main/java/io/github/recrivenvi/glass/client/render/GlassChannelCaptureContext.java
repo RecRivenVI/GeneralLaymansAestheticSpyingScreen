@@ -180,6 +180,8 @@ final class GlassChannelCaptureContext implements AutoCloseable {
                             buffers,
                             gameState,
                             featureDispatcher);
+            // This version constructs sky resources in the resource reload entry point.
+            renderer.onResourceManagerReload(client.getResourceManager());
             renderState = gameState.levelRenderState;
             width = requestedWidth;
             height = requestedHeight;

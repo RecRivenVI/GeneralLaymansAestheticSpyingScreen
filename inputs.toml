@@ -24,3 +24,10 @@ version = "15.1"
 description = "26.3 NeoForge 用户验收实例的 Custom Skin Loader"
 source = "https://modrinth.com/mod/customskinloader/version/yyYvYfZI"
 sha256 = ["c8769a38b3cc1da2a7b2f5827d1a53a24cd1ef6d0784b1eb545569f5882a2ffb"]
+
+[mcp_render_review]
+mod-id = "minecraft_protocol_probe"
+version = "0.0.1-phase8"
+description = "渲染原型验证使用的固定 MCP alpha 完整发行 JAR"
+source = "Mine-Craft-Protocol alpha 20261020-0422-52bc024f"
+sha256 = ["fd7f7dc6c5c1563955837fd4a932b57c350e3181eaf45bfac1c2ea9d0af0e4a0"]

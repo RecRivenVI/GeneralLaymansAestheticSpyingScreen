@@ -35,17 +35,17 @@ public final class GlassContent {
             registerBlock(
                     "glass_projector",
                     GlassProjectorBlock::new,
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.BLUE_CONCRETE));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
     public static final DeferredBlock<Block> EXTENSION =
             registerBlock(
                     "glass_extension",
                     GlassExtensionBlock::new,
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.WHITE_CONCRETE));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
     public static final DeferredBlock<Block> WIRELESS_EXTENSION =
             registerBlock(
                     "glass_wireless_extension",
                     GlassWirelessExtensionBlock::new,
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.GREEN_CONCRETE));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
     public static final DeferredHolder<SoundEvent, SoundEvent> AMBIENCE =
             SOUNDS.register("ambience", () -> SoundEvent.createVariableRangeEvent(id("ambience")));
 

@@ -11,7 +11,11 @@ public interface GlassViewRenderer extends AutoCloseable {
 
     void capture(DeltaTracker deltaTracker);
 
-    void drawProjector(LevelRenderState levelState);
+    void prepareProjector(LevelRenderState levelState);
+
+    void drawProjector(com.mojang.renderpearl.api.commands.RenderPass pass);
+
+    void endProjectorFrame();
 
     boolean isChannelExtraction();
 

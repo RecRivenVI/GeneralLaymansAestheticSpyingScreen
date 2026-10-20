@@ -35,17 +35,17 @@ public final class GlassContent {
             registerBlock(
                     "glass_projector",
                     GlassProjectorBlock::new,
-                    BlockBehaviour.Properties.copy(Blocks.BLUE_CONCRETE));
+                    BlockBehaviour.Properties.copy(Blocks.GLASS));
     public static final RegistryObject<Block> EXTENSION =
             registerBlock(
                     "glass_extension",
                     GlassExtensionBlock::new,
-                    BlockBehaviour.Properties.copy(Blocks.WHITE_CONCRETE));
+                    BlockBehaviour.Properties.copy(Blocks.GLASS));
     public static final RegistryObject<Block> WIRELESS_EXTENSION =
             registerBlock(
                     "glass_wireless_extension",
                     GlassWirelessExtensionBlock::new,
-                    BlockBehaviour.Properties.copy(Blocks.GREEN_CONCRETE));
+                    BlockBehaviour.Properties.copy(Blocks.GLASS));
     public static final RegistryObject<SoundEvent> AMBIENCE =
             SOUNDS.register("ambience", () -> SoundEvent.createVariableRangeEvent(id("ambience")));
 

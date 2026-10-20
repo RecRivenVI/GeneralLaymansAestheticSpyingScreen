@@ -48,17 +48,4 @@ public abstract class GameRendererMixin implements GameRendererProjectionAccess 
         GlassClient.VIEW_RENDERER.capture(
                 net.minecraft.client.Minecraft.getInstance().getDeltaTracker());
     }
-
-    @Inject(
-            method = "renderLevel",
-            at =
-                    @At(
-                            value = "INVOKE",
-                            target =
-                                    "Lnet/minecraft/client/renderer/LevelRenderer;render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;ZLnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lorg/joml/Vector4f;ZZ)V",
-                            shift = At.Shift.AFTER))
-    private void glass$drawProjector(CallbackInfo callback) {
-        GlassClient.VIEW_RENDERER.drawProjector(
-                ((GameRenderer) (Object) this).gameRenderState().levelRenderState);
-    }
 }
