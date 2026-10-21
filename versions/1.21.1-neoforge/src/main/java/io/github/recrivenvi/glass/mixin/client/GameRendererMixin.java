@@ -18,6 +18,18 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class GameRendererMixin implements GameRendererProjectionAccess {
     @Unique private final Matrix4f glass$levelProjection = new Matrix4f();
 
+    @org.spongepowered.asm.mixin.injection.Inject(
+            method = "lightTexture",
+            at = @At("HEAD"),
+            cancellable = true)
+    private void glass$sourceLightmap(
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<LightTexture>
+                    callback) {
+        var context = io.github.recrivenvi.glass.client.render.GlassCaptureWorld.current();
+        // RenderType's lightmap state obtains this getter instead of renderLevel's argument.
+        if (context != null) callback.setReturnValue(context.lightTexture());
+    }
+
     @Override
     public Matrix4fc glass$getLevelProjection() {
         return glass$levelProjection;

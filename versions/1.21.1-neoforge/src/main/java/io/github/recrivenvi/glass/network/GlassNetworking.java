@@ -37,6 +37,16 @@ public final class GlassNetworking {
                 GlassStatePayload.TYPE,
                 GlassStatePayload.CODEC,
                 (payload, context) -> receiveOnClient(payload));
+        registrar.playToClient(
+                GlassRemoteFramePayload.TYPE,
+                GlassRemoteFramePayload.CODEC,
+                (payload, context) -> receiveOnClient(payload));
+        registrar.playToServer(
+                GlassRemoteWatchPayload.TYPE,
+                GlassRemoteWatchPayload.CODEC,
+                (payload, context) ->
+                        io.github.recrivenvi.glass.remote.GlassRemoteSubscriptions.watch(
+                                (ServerPlayer) context.player(), payload.projector()));
         registrar.playToServer(
                 SetTerminalChannelPayload.TYPE,
                 SetTerminalChannelPayload.CODEC,

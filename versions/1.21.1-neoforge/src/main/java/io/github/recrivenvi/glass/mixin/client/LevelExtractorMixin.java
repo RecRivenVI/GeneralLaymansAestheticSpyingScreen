@@ -15,8 +15,33 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(LevelRenderer.class)
 public abstract class LevelExtractorMixin {
+    @com.llamalad7.mixinextras.injector.ModifyExpressionValue(
+            method =
+                    "addParticleInternal(Lnet/minecraft/core/particles/ParticleOptions;ZZDDDDDD)Lnet/minecraft/client/particle/Particle;",
+            at =
+                    @At(
+                            value = "INVOKE",
+                            target =
+                                    "Lnet/minecraft/client/Camera;getPosition()Lnet/minecraft/world/phys/Vec3;"))
+    private net.minecraft.world.phys.Vec3 glass$boundedSourceParticles(
+            net.minecraft.world.phys.Vec3 original,
+            net.minecraft.core.particles.ParticleOptions options,
+            boolean overrideLimiter,
+            boolean alwaysShow,
+            double x,
+            double y,
+            double z,
+            double dx,
+            double dy,
+            double dz) {
+        // Source particles are already bounded by the subscription; the player camera is elsewhere.
+        return io.github.recrivenvi.glass.client.render.GlassCaptureWorld.current() == null
+                ? original
+                : new net.minecraft.world.phys.Vec3(x, y, z);
+    }
+
     @Redirect(
-            method = {"allChanged", "setupRender", "renderLevel"},
+            method = {"allChanged", "renderLevel"},
             at =
                     @At(
                             value = "INVOKE",

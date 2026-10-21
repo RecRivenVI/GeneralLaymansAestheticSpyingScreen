@@ -1,0 +1,24 @@
+tool = "runtime_validation"
+targets = ["1.21.1-neoforge"]
+
+[products]
+a = "glass_projection_a"
+
+[measurement]
+width = 1920
+height = 1080
+warmup-seconds = 10
+window-seconds = 15
+source-chunks = 25
+global-full-chunks = 100
+
+[instances.client]
+width = 1920
+height = 1080
+player-name = "RecRivenVI"
+mods = ["mcp_remote_projection"]
+jvm-args = ["-XX:ActiveProcessorCount=4", "-Dglass.performance=true"]
+
+[instances.server]
+memory-max = "2G"
+jvm-args = ["-XX:ActiveProcessorCount=4", "-Dglass.performance=true", "-Dglass.performance.entities.no_ai=true"]

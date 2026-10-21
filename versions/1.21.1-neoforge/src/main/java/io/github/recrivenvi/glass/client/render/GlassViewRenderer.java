@@ -15,6 +15,8 @@ public interface GlassViewRenderer extends AutoCloseable {
 
     void drawProjector(Matrix4f viewRotation, Vec3 camera, Frustum frustum);
 
+    void withChannelScope(Runnable action);
+
     boolean isChannelExtraction();
 
     void blockChanged(BlockPos pos, int updateFlags);

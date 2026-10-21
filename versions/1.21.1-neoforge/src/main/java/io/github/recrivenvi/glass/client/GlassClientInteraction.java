@@ -21,6 +21,10 @@ public final class GlassClientInteraction {
                         GlassClientState.replace(GlassStateSnapshot.fromTag(state.state()));
                     else if (payload instanceof OpenGlassScreenPayload screen)
                         open(Minecraft.getInstance(), screen.pos());
+                    else if (payload
+                            instanceof
+                            io.github.recrivenvi.glass.network.GlassRemoteFramePayload frame)
+                        io.github.recrivenvi.glass.client.render.GlassRemoteViews.receive(frame);
                 });
     }
 

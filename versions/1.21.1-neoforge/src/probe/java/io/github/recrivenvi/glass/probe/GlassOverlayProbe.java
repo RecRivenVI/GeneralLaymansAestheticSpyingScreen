@@ -27,15 +27,50 @@ import net.neoforged.neoforge.common.NeoForge;
 /** Creates a fixed scene only in this validation's copied world; MCP performs the observation. */
 @Mod(value = "glass_probe", dist = Dist.CLIENT)
 public final class GlassOverlayProbe {
+    private static final com.google.gson.JsonObject SCENE = sceneInput();
+
+    static Path output() {
+        var base = Path.of(System.getProperty("validation.result"));
+        String name = System.getenv("GLASS_VALIDATION_CASE");
+        return name == null ? base : base.resolve(name);
+    }
+
+    static String sableCase() {
+        String configured = System.getProperty("glass.sable.fixture", "");
+        return configured.equals("spec") ? SCENE.get("sable").getAsString() : configured;
+    }
+
+    private static com.google.gson.JsonObject sceneInput() {
+        Path input = Path.of("glass-scene.json");
+        try {
+            return Files.exists(input)
+                    ? com.google.gson.JsonParser.parseString(Files.readString(input))
+                            .getAsJsonObject()
+                    : new com.google.gson.JsonObject();
+        } catch (java.io.IOException error) {
+            throw new java.io.UncheckedIOException(error);
+        }
+    }
+
     private boolean scheduled;
     private long lastObservation;
     private boolean creating;
 
-    public GlassOverlayProbe() {
+    public GlassOverlayProbe(net.neoforged.bus.api.IEventBus bus) {
+        if (Boolean.getBoolean("glass.acceptance.demo")) new GlassAcceptanceProbe(bus);
         NeoForge.EVENT_BUS.addListener(this::tick);
+        if (Boolean.getBoolean("glass.performance")) {
+            new io.github.recrivenvi.glass.probe.performance.PerformanceClient();
+            return;
+        }
+        if (SCENE.has("animate") && SCENE.get("animate").getAsBoolean()) new GlassAnimationProbe();
+        if (Boolean.getBoolean("glass.rich.fixture")) new GlassRichProbe();
+        if (Boolean.getBoolean("glass.remote.validation")) new GlassRemoteProbe();
+        if (!sableCase().isEmpty() && !sableCase().equals("none")) new GlassSableProbe();
     }
 
     private void tick(ClientTickEvent.Post event) {
+        if (Boolean.getBoolean("glass.acceptance.demo")) return;
         var client = Minecraft.getInstance();
         if (Boolean.getBoolean("glass.overlay.fresh_world")
                 && !creating
@@ -45,9 +80,13 @@ public final class GlassOverlayProbe {
             creating = true;
             client.createWorldOpenFlows()
                     .createFreshLevel(
-                            "GLASS Overlay 21 Fresh",
+                            SCENE.has("world")
+                                    ? SCENE.get("world").getAsString()
+                                    : "GLASS Overlay 21 Fresh",
                             new net.minecraft.world.level.LevelSettings(
-                                    "GLASS Overlay 21 Fresh",
+                                    SCENE.has("world")
+                                            ? SCENE.get("world").getAsString()
+                                            : "GLASS Overlay 21 Fresh",
                                     net.minecraft.world.level.GameType.CREATIVE,
                                     false,
                                     net.minecraft.world.Difficulty.PEACEFUL,
@@ -67,6 +106,7 @@ public final class GlassOverlayProbe {
                             client.screen);
         }
         if (client.player == null || client.getSingleplayerServer() == null) return;
+        if (Boolean.getBoolean("glass.performance")) return;
         if (scheduled) {
             if (System.nanoTime() - lastObservation > 500_000_000L) {
                 lastObservation = System.nanoTime();
@@ -94,8 +134,7 @@ public final class GlassOverlayProbe {
                                         network.map(n -> n.surfaces().size()).orElse(0)));
                     }
                     Files.writeString(
-                            Path.of(System.getProperty("validation.result"))
-                                    .resolve("view-state.json"),
+                            output().resolve("view-state.json"),
                             new GsonBuilder()
                                     .create()
                                     .toJson(
@@ -104,13 +143,72 @@ public final class GlassOverlayProbe {
                                                     client.options.graphicsMode().get().name(),
                                                     "views",
                                                     views)));
+                    if (Boolean.getBoolean("glass.remote.validation")) {
+                        var field =
+                                io.github.recrivenvi.glass.client.render.GlassRemoteViews.class
+                                        .getDeclaredField("VIEWS");
+                        field.setAccessible(true);
+                        var remote = (Map<?, ?>) field.get(null);
+                        var data = new java.util.ArrayList<Map<String, Object>>();
+                        for (var value : remote.values()) {
+                            Map<String, Object> record = new java.util.LinkedHashMap<>();
+                            for (String name :
+                                    new String[] {
+                                        "level", "terminal", "received", "expectedChunks"
+                                    }) {
+                                var property = value.getClass().getDeclaredField(name);
+                                property.setAccessible(true);
+                                var item = property.get(value);
+                                if (name.equals("level")) {
+                                    record.put("independentLevel", item != client.level);
+                                    if (net.neoforged.fml.ModList.get().isLoaded("sable"))
+                                        record.put(
+                                                "sourceShips",
+                                                dev
+                                                        .ryanhcode
+                                                        .sable
+                                                        .api
+                                                        .sublevel
+                                                        .SubLevelContainer
+                                                        .getContainer(
+                                                                (net.minecraft.client.multiplayer
+                                                                                .ClientLevel)
+                                                                        item)
+                                                        .getAllSubLevels()
+                                                        .stream()
+                                                        .map(
+                                                                ship ->
+                                                                        Map.of(
+                                                                                "logicalPose",
+                                                                                ship.logicalPose()
+                                                                                        .toString(),
+                                                                                "renderPose",
+                                                                                ship.renderPose(
+                                                                                                client.getTimer()
+                                                                                                        .getGameTimeDeltaPartialTick(
+                                                                                                                false))
+                                                                                        .toString()))
+                                                        .toList());
+                                } else if (item instanceof java.util.Collection<?> collection)
+                                    record.put(name, collection.size());
+                                else record.put(name, item.toString());
+                            }
+                            data.add(record);
+                        }
+                        Files.writeString(
+                                output().resolve("remote-views.json"),
+                                new GsonBuilder().create().toJson(data));
+                    }
                 } catch (java.io.IOException error) {
                     throw new java.io.UncheckedIOException(error);
+                } catch (ReflectiveOperationException error) {
+                    throw new IllegalStateException(error);
                 }
             }
             return;
         }
         scheduled = true;
+        if (Boolean.getBoolean("glass.fixture.resume")) return;
         var server = client.getSingleplayerServer();
         server.execute(
                 () -> {
@@ -211,7 +309,7 @@ public final class GlassOverlayProbe {
                                             p, Optional.of(channel), wireless));
                         }
                         GlassServerState.rebuild(server);
-                        Path output = Path.of(System.getProperty("validation.result"));
+                        Path output = output();
                         Files.createDirectories(output);
                         Files.writeString(
                                 output.resolve("fixture.json"),

@@ -33,6 +33,9 @@ val formatPython =
             layout.projectDirectory.file("mcp_alpha.py").asFile,
             layout.projectDirectory.file("native_gui.py").asFile,
             layout.projectDirectory.file("render_review.py").asFile,
+            layout.projectDirectory.file("remote_projection.py").asFile,
+            layout.projectDirectory.file("performance_projection.py").asFile,
+            layout.projectDirectory.file("performance_report.py").asFile,
         )
     }
 val checkPython =
@@ -46,6 +49,9 @@ val checkPython =
             layout.projectDirectory.file("mcp_alpha.py").asFile,
             layout.projectDirectory.file("native_gui.py").asFile,
             layout.projectDirectory.file("render_review.py").asFile,
+            layout.projectDirectory.file("remote_projection.py").asFile,
+            layout.projectDirectory.file("performance_projection.py").asFile,
+            layout.projectDirectory.file("performance_report.py").asFile,
         )
     }
 
@@ -119,4 +125,14 @@ tasks.register<Exec>("verifyRenderReview") {
 tasks.register<Exec>("launchRenderAcceptance") {
     workingDir(repository)
     commandLine("python", "components/runtime_validation/render_review.py", "acceptance")
+}
+
+tasks.register<Exec>("verifyRemoteProjection") {
+    workingDir(repository)
+    commandLine("python", "components/runtime_validation/remote_projection.py")
+}
+
+tasks.register<Exec>("measureRemoteProjection") {
+    workingDir(repository)
+    commandLine("python", "components/runtime_validation/performance_projection.py", "all")
 }

@@ -71,5 +71,6 @@
     "glass.config.wireless_max_nodes": "Maximum Wireless Nodes",
     "glass.config.wireless_max_nodes.tooltip": "Maximum wireless extensions attached to one projector.",
     "glass.config.legacy_fade_animation": "Classic",
-    "glass.config.legacy_fade_animation.tooltip": "Off: the default animation only scales, with no fading. On: the upstream Classic animation keeps full-sized faces; activation starts white and fades the image in over white; deactivation removes the image immediately, then fades the white out."
+    "glass.config.legacy_fade_animation.tooltip": "Off: the default animation only scales, with no fading. On: the upstream Classic animation keeps full-sized faces; activation starts white and fades the image in over white; deactivation removes the image immediately, then fades the white out.",
+    "message.glass.remote_budget": "Remote view unavailable: the server region budget is full."
 }

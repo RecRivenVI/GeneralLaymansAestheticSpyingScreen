@@ -31,3 +31,23 @@ tasks.register<Jar>("probeJar") {
     archiveClassifier.set("probe")
     from(provider { sourceSets["probe"].output })
 }
+
+val compatibilityApis by
+    tasks.registering(Sync::class) {
+        for (name in listOf("sable", "sodium")) {
+            from(provider { zipTree(target.input(name).singleFile) }) {
+                include("META-INF/jarjar/*.jar")
+                eachFile { relativePath = RelativePath(true, this.name) }
+                includeEmptyDirs = false
+            }
+        }
+        into(layout.buildDirectory.dir("compatibility_apis"))
+    }
+
+dependencies {
+    compileOnly(target.input("sable"))
+    compileOnly(
+        fileTree(layout.buildDirectory.dir("compatibility_apis")) { include("*.jar") }
+            .builtBy(compatibilityApis),
+    )
+}

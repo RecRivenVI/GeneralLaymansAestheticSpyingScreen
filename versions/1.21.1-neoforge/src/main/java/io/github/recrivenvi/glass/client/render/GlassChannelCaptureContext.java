@@ -16,6 +16,7 @@ final class GlassChannelCaptureContext implements AutoCloseable {
     TextureTarget target;
     LevelRenderer renderer;
     ClientLevel level;
+    GlassRemoteViews.View source;
     private long lastAmbientTick = Long.MIN_VALUE;
     private boolean hasUnwrappedYaw;
     private float unwrappedYaw;
@@ -26,36 +27,38 @@ final class GlassChannelCaptureContext implements AutoCloseable {
             int height,
             ResourceKey<Level> dimension,
             BlockPos terminal) {
-        if (client.level == null
-                || !dimension.equals(client.level.dimension())
-                || !client.level.hasChunk(terminal.getX() >> 4, terminal.getZ() >> 4)) return false;
-        if (target == null) target = new TextureTarget(width, height, true, Minecraft.ON_OSX);
-        else if (target.width != width || target.height != height) {
-            target.resize(width, height, Minecraft.ON_OSX);
-            if (renderer != null) renderer.resize(width, height);
-        }
-        if (renderer == null) {
-            var previous = client.getMainRenderTarget();
-            var access = (MinecraftRenderTargetAccessor) client;
-            access.glass$setMainRenderTarget(target);
-            try {
-                renderer =
-                        new LevelRenderer(
-                                client,
-                                client.getEntityRenderDispatcher(),
-                                client.getBlockEntityRenderDispatcher(),
-                                client.renderBuffers());
-                renderer.onResourceManagerReload(client.getResourceManager());
-            } finally {
-                access.glass$setMainRenderTarget(previous);
-                previous.bindWrite(true);
+        var remote = GlassRemoteViews.find(dimension, terminal);
+        if (remote == null || !remote.ready()) return false;
+        source = remote;
+        try (var world = GlassCaptureWorld.open(remote.context())) {
+            if (target == null) target = new TextureTarget(width, height, true, Minecraft.ON_OSX);
+            else if (target.width != width || target.height != height) {
+                target.resize(width, height, Minecraft.ON_OSX);
+                if (renderer != null) renderer.resize(width, height);
             }
+            if (renderer == null) {
+                var previous = client.getMainRenderTarget();
+                var access = (MinecraftRenderTargetAccessor) client;
+                access.glass$setMainRenderTarget(target);
+                try {
+                    renderer =
+                            new LevelRenderer(
+                                    client,
+                                    client.getEntityRenderDispatcher(),
+                                    client.getBlockEntityRenderDispatcher(),
+                                    client.renderBuffers());
+                    renderer.onResourceManagerReload(client.getResourceManager());
+                } finally {
+                    access.glass$setMainRenderTarget(previous);
+                    previous.bindWrite(true);
+                }
+            }
+            if (level != remote.level) {
+                level = remote.level;
+                renderer.setLevel(level);
+            }
+            return true;
         }
-        if (level != client.level) {
-            level = client.level;
-            renderer.setLevel(level);
-        }
-        return true;
     }
 
     void animateAt(Vec3 position) {
@@ -86,5 +89,6 @@ final class GlassChannelCaptureContext implements AutoCloseable {
             target = null;
         }
         level = null;
+        source = null;
     }
 }

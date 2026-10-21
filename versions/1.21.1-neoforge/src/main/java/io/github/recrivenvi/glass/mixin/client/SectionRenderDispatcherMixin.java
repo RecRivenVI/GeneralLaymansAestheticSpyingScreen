@@ -26,7 +26,9 @@ public abstract class SectionRenderDispatcherMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void glass$ownChannelCompileBuffers(CallbackInfo ci) {
-        if (!GlassClient.VIEW_RENDERER.isChannelExtraction()) return;
+        if (!GlassClient.VIEW_RENDERER.isChannelExtraction()
+                && io.github.recrivenvi.glass.client.render.GlassCaptureWorld.current() == null)
+            return;
         // Vanilla's mailbox assumes one dispatcher consumes this pool. Sharing the main pool
         // starves channel queues and races acquire() against another renderer in Fabulous.
         fixedBuffers = new SectionBufferBuilderPack();

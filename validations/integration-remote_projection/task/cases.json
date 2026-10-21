@@ -1,0 +1,76 @@
+{
+    "cases": [
+        {
+            "name": "vanilla-none",
+            "role": "client",
+            "sable": "none",
+            "classic": false,
+            "graphics": 1,
+            "world": "GLASS B vanilla none",
+            "animate": true
+        },
+        {
+            "name": "vanilla-terminal",
+            "role": "client",
+            "sable": "terminal",
+            "classic": false,
+            "graphics": 1,
+            "world": "GLASS B vanilla terminal",
+            "animate": false
+        },
+        {
+            "name": "vanilla-projector",
+            "role": "client",
+            "sable": "projector",
+            "classic": true,
+            "graphics": 2,
+            "world": "GLASS B vanilla projector",
+            "animate": false
+        },
+        {
+            "name": "vanilla-both",
+            "role": "client",
+            "sable": "both",
+            "classic": false,
+            "graphics": 1,
+            "world": "GLASS B vanilla both",
+            "animate": false
+        },
+        {
+            "name": "sodium-none",
+            "role": "client-multiplayer",
+            "sable": "none",
+            "classic": true,
+            "graphics": 2,
+            "world": "GLASS B sodium none",
+            "animate": true
+        },
+        {
+            "name": "sodium-terminal",
+            "role": "client-multiplayer",
+            "sable": "terminal",
+            "classic": false,
+            "graphics": 1,
+            "world": "GLASS B sodium terminal",
+            "animate": false
+        },
+        {
+            "name": "sodium-projector",
+            "role": "client-multiplayer",
+            "sable": "projector",
+            "classic": true,
+            "graphics": 2,
+            "world": "GLASS B sodium projector",
+            "animate": false
+        },
+        {
+            "name": "sodium-both",
+            "role": "client-multiplayer",
+            "sable": "both",
+            "classic": false,
+            "graphics": 2,
+            "world": "GLASS B sodium both",
+            "animate": false
+        }
+    ]
+}

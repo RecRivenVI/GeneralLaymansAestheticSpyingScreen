@@ -25,7 +25,19 @@ public final class GlassRenderSnapshots {
         if (level == null) return List.of();
         GlassStateSnapshot snapshot = GlassClientState.snapshot();
         double now = level.getGameTime() + client.getTimer().getGameTimeDeltaPartialTick(false);
-        return states(level.dimension(), snapshot.networks(), now);
+        var result = states(level.dimension(), snapshot.networks(), now);
+        for (var state : result) {
+            if (!state.active) continue;
+            var network =
+                    snapshot.networks().stream()
+                            .filter(n -> n.projector().equals(state.network))
+                            .findFirst()
+                            .orElseThrow();
+            state.active =
+                    io.github.recrivenvi.glass.client.render.GlassRemoteViews.ready(
+                            network.terminal().dimension(), network.terminal().pos());
+        }
+        return result;
     }
 
     static List<GlassProjectorRenderState> states(

@@ -29,6 +29,7 @@ public final class GlassClient {
         bus.addListener(Blaze3DViewRenderer::registerShaders);
         NeoForge.EVENT_BUS.addListener(
                 (ClientTickEvent.Post event) -> {
+                    io.github.recrivenvi.glass.client.render.GlassRemoteViews.tick();
                     io.github.recrivenvi.glass.client.render.GlassBlockInteriors.tick();
                     VIEW_RENDERER.replaceViews(
                             GlassRenderSnapshots.current(Minecraft.getInstance()));
@@ -47,19 +48,25 @@ public final class GlassClient {
                 });
         NeoForge.EVENT_BUS.addListener(
                 (ClientPlayerNetworkEvent.LoggingOut event) -> {
+                    io.github.recrivenvi.glass.client.render.GlassRemoteViews.clear();
                     GlassClientState.clear();
                     VIEW_RENDERER.reset();
                 });
         NeoForge.EVENT_BUS.addListener(
                 (GameShuttingDownEvent event) -> {
                     VIEW_RENDERER.close();
+                    io.github.recrivenvi.glass.client.render.GlassRemoteViews.clear();
                     io.github.recrivenvi.glass.client.gui.GlassCursor.close();
                 });
         bus.addListener(
                 (net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) ->
                         event.registerReloadListener(
                                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
-                                        manager -> VIEW_RENDERER.reset()));
+                                        manager -> {
+                                            VIEW_RENDERER.reset();
+                                            io.github.recrivenvi.glass.client.render
+                                                    .GlassRemoteViews.releaseAndClear();
+                                        }));
         GlassMod.LOGGER.info("Initializing GLASS NeoForge 1.21.1 client");
     }
 }

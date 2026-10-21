@@ -1,0 +1,23 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "io.github.recrivenvi.glass.probe.performance.mixin",
+    "plugin": "io.github.recrivenvi.glass.probe.performance.PerformanceMixinPlugin",
+    "compatibilityLevel": "JAVA_21",
+    "mixins": [
+        "PerformanceServerTickMixin",
+        "PerformanceRemoteSendMixin"
+    ],
+    "client": [
+        "PerformanceFrameMixin",
+        "PerformanceGameRenderMixin",
+        "PerformanceViewTimelineMixin",
+        "PerformanceStagesMixin",
+        "PerformanceCompileMixin",
+        "PerformanceRegionMixin",
+        "PerformanceSodiumCompileMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

@@ -11,6 +11,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin {
+    @Inject(method = "shouldTickDeath", at = @At("HEAD"), cancellable = true)
+    private void glass$sourceDeath(
+            net.minecraft.world.entity.Entity entity,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean>
+                    callback) {
+        var scope = io.github.recrivenvi.glass.client.render.GlassCaptureWorld.current();
+        // The native check measures against the local player's chunk, which is in another view.
+        if (scope != null && scope.level() == (Object) this) callback.setReturnValue(true);
+    }
+
     @Inject(method = "sendBlockUpdated", at = @At("TAIL"))
     private void glass$forwardBlockChanged(
             BlockPos pos,

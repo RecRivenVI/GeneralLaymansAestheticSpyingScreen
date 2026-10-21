@@ -25,3 +25,17 @@ side = "BOTH"
 
 [[mixins]]
 config = "glass.mixins.json"
+
+[[dependencies.${mod_id}]]
+modId = "sable"
+type = "optional"
+versionRange = "[${sable_minimum},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "sodium"
+type = "optional"
+versionRange = "[${sodium_minimum},)"
+ordering = "AFTER"
+side = "CLIENT"

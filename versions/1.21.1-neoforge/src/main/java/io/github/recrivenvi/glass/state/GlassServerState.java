@@ -38,7 +38,7 @@ public final class GlassServerState {
     public static GlassSavedState saved(MinecraftServer server) {
         return server.overworld()
                 .getDataStorage()
-                .computeIfAbsent(GlassSavedState.TYPE, "glass_state");
+                .computeIfAbsent(GlassSavedState.TYPE, GlassSavedState.ID);
     }
 
     public static GlassStateSnapshot snapshot(MinecraftServer server) {
@@ -477,12 +477,49 @@ public final class GlassServerState {
         return channel.publicChannel() || channel.owner().filter(playerId::equals).isPresent();
     }
 
+    /**
+     * Resolves an observed projector through server-owned channel permissions before loading data.
+     */
+    public static Optional<GlassStateSnapshot.Terminal> remoteTerminal(
+            ServerPlayer player, GlobalPos projectorPos) {
+        if (!projectorPos.dimension().equals(player.level().dimension())) return Optional.empty();
+        ServerLevel level = player.serverLevel();
+        if (!level.hasChunkAt(projectorPos.pos())) return Optional.empty();
+        BlockState block = level.getBlockState(projectorPos.pos());
+        if (!block.is(GlassContent.PROJECTOR.get()) || !block.getValue(GlassProjectorBlock.POWERED))
+            return Optional.empty();
+        double distance = GlassConfig.get().observationDistance();
+        GlassSavedState saved = saved(level.getServer());
+        var projector = saved.projectors().get(projectorPos);
+        if (projector == null
+                || projector.channelId().isEmpty()
+                || !canAccess(projector, saved, player)) return Optional.empty();
+        if (snapshot(level.getServer())
+                .observationPositions(projector)
+                .filter(
+                        pos ->
+                                pos.dimension().equals(level.dimension())
+                                        && level.hasChunkAt(pos.pos()))
+                .noneMatch(
+                        pos ->
+                                player.distanceToSqr(
+                                                io.github.recrivenvi.glass.remote.GlassSableServer
+                                                        .center(level, pos.pos()))
+                                        <= distance * distance)) return Optional.empty();
+        return saved.terminals().values().stream()
+                .filter(
+                        t ->
+                                t.channel().id().equals(projector.channelId().get())
+                                        && !t.channel().name().isEmpty())
+                .findFirst();
+    }
+
     /** 只保护直接交互，和投影可见距离及传播距离无关。 */
     public static boolean canInteract(ServerPlayer player, GlobalPos pos) {
         if (!player.level().dimension().equals(pos.dimension())) return false;
-        BlockPos blockPos = pos.pos();
         return player.distanceToSqr(
-                        blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5)
+                        io.github.recrivenvi.glass.remote.GlassSableServer.center(
+                                player.serverLevel(), pos.pos()))
                 <= 64.0;
     }
 

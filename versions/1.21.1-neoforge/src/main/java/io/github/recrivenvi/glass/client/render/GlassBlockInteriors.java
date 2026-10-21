@@ -22,7 +22,6 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.phys.AABB;
 import org.joml.Quaternionf;
 
 /** 上游内饰经原版动态模型入口提交；世界中的完整方块仍由区块网格负责。 */
@@ -77,7 +76,10 @@ public final class GlassBlockInteriors {
     }
 
     public static void tick() {
-        ClientLevel level = Minecraft.getInstance().level;
+        ClientLevel level =
+                GlassCaptureWorld.current() == null
+                        ? Minecraft.getInstance().level
+                        : GlassCaptureWorld.current().level();
         Map<BlockPos, Interior> blocks = LEVELS.get(level);
         if (blocks == null) return;
         Map<BlockPos, Boolean> active = new HashMap<>();
@@ -107,7 +109,10 @@ public final class GlassBlockInteriors {
 
     public static void draw(net.neoforged.neoforge.client.event.RenderLevelStageEvent event) {
         Minecraft client = Minecraft.getInstance();
-        ClientLevel level = client.level;
+        ClientLevel level =
+                GlassCaptureWorld.current() == null
+                        ? client.level
+                        : GlassCaptureWorld.current().level();
         Map<BlockPos, Interior> blocks = LEVELS.get(level);
         if (blocks == null) return;
         var camera = event.getCamera().getPosition();
@@ -128,7 +133,7 @@ public final class GlassBlockInteriors {
                                                 }));
         for (var entry : blocks.entrySet()) {
             BlockPos pos = entry.getKey();
-            if (!event.getFrustum().isVisible(new AABB(pos))) continue;
+            if (!event.getFrustum().isVisible(GlassSableClient.bounds(level, pos))) continue;
             BlockState block =
                     GlassChannelBlockVisibility.stateForSnapshot(
                             level.getBlockState(pos),
@@ -139,11 +144,12 @@ public final class GlassBlockInteriors {
                             level.getBrightness(LightLayer.BLOCK, pos),
                             level.getBrightness(LightLayer.SKY, pos));
             PoseStack pose = new PoseStack();
-            pose.mulPose(event.getModelViewMatrix());
-            pose.translate(
-                    pos.getX() + .5 - camera.x,
-                    pos.getY() + .5 - camera.y,
-                    pos.getZ() + .5 - camera.z);
+            pose.mulPose(
+                    new org.joml.Matrix4f(
+                            new org.joml.Matrix4d(event.getModelViewMatrix())
+                                    .translate(-camera.x, -camera.y, -camera.z)
+                                    .mul(GlassSableClient.pose(level, pos))
+                                    .translate(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5)));
             if (block.getBlock() instanceof GlassProjectorBlock) {
                 orientBeacon(pose, block.getValue(GlassProjectorBlock.FACING));
                 Interior interior = entry.getValue();
@@ -216,6 +222,8 @@ public final class GlassBlockInteriors {
             }
         }
         buffers.endBatch();
+        // Entity-layer cleanup disables lightmapping while terrain layers still need it.
+        client.gameRenderer.lightTexture().turnOnLightLayer();
     }
 
     private static void orientBeacon(PoseStack pose, Direction facing) {

@@ -1,0 +1,34 @@
+tool = "runtime_validation"
+targets = ["1.21.1-neoforge"]
+
+[mcp]
+input = "mcp_remote_projection"
+snapshot = "20261020-0422-52bc024f"
+source-fingerprint = "52bc024f38e8a93e39fb0059b5e097725e079394554b2861d9de99a8b40a06df"
+consumer = "glass_product_b_01a08652"
+
+[instances.client]
+width = 1920
+height = 1080
+player-name = "RecRivenVI"
+mods = ["mcp_remote_projection", "sable"]
+jvm-args = ["-XX:ActiveProcessorCount=4", "-Dminecraft.protocol.probe.port=0", "-Dglass.overlay.fresh_world=true", "-Dglass.remote.validation=true", "-Dglass.sable.fixture=spec"]
+
+[instances.client-multiplayer]
+width = 1920
+height = 1080
+player-name = "RecRivenVI"
+mods = ["mcp_remote_projection", "sable", "sodium"]
+jvm-args = ["-XX:ActiveProcessorCount=4", "-Dminecraft.protocol.probe.port=0", "-Dglass.overlay.fresh_world=true", "-Dglass.remote.validation=true", "-Dglass.sable.fixture=spec"]
+
+[profiles.automatic]
+width = 1920
+height = 1080
+master-volume = 0.0
+player-name = "RecRivenVI"
+
+[profiles.acceptance]
+width = 2560
+height = 1440
+master-volume = 0.5
+player-name = "RecRivenVI"

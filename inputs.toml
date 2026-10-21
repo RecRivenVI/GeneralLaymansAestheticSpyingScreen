@@ -31,3 +31,39 @@ version = "0.0.1-phase8"
 description = "渲染原型验证使用的固定 MCP alpha 完整发行 JAR"
 source = "Mine-Craft-Protocol alpha 20261020-0422-52bc024f"
 sha256 = ["fd7f7dc6c5c1563955837fd4a932b57c350e3181eaf45bfac1c2ea9d0af0e4a0"]
+
+[sable]
+mod-id = "sable"
+version = "2.0.6"
+description = "1.21.1 NeoForge 路线 B 的可选兼容 API 与验证发行包"
+source = "https://modrinth.com/mod/sable/version/fg9dTRz9"
+sha256 = ["9c199157843bf953a47dff625fc5bb41c01a90538d35ad18e6996bbcb8a617c2"]
+
+[sodium]
+mod-id = "sodium"
+version = "0.8.13+mc1.21.1"
+description = "1.21.1 NeoForge 路线 B 的可选兼容 API 与验证发行包"
+source = "https://modrinth.com/mod/sodium/version/uMOpc5uV"
+sha256 = ["575d187b15328d7bddd8a9b1bee64333c22c14735f5780ec49eac0cd5503c08d"]
+[mcp_remote_projection]
+mod-id = "minecraft_protocol_probe"
+version = "0.0.1-phase8"
+
+description = "1.21.1 NeoForge 路线 B 的固定 MCP alpha 完整发行包"
+source = "Mine-Craft-Protocol alpha 20261020-0422-52bc024f"
+sha256 = ["80ad0273518edcb219b73005ca13da969e8fae8fc107f1535a2b7574d95d746e"]
+
+[zume_acceptance]
+mod-id = "zume"
+version = "1.2.2"
+
+description = "1.21.1 NeoForge 用户验收实例的 Zume"
+source = "https://modrinth.com/mod/zume/version/Rh2ImJ86"
+sha256 = ["c33b99e8976dfeb0aeb1afcc2ad8e65c7310532ae5ccc38c75317d672dc95e6f"]
+
+[glass_projection_a]
+mod-id = "glass"
+version = "8.0.0-alpha.1"
+description = "检查点 35f1fc0 的 1.21.1 NeoForge 路线 A 原样性能对照构件"
+source = "GLASS Git checkpoint 35f1fc00d2a82c6765d2bf06f17a808398430cb3"
+sha256 = ["910b013f8118940a98bd4614b5ba92d2eaf5031407c973557692f70f4f8012dd"]

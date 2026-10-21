@@ -395,6 +395,8 @@ def launch(
     extra_scopes=(),
     jvm_args=(),
     graphics_backend="VULKAN",
+    player_uuid=None,
+    multiplayer=None,
 ):
     data = json.loads((CACHE / "launch.json").read_text("utf-8"))
     profile, vanilla = data["profile"], data["vanilla"]
@@ -405,9 +407,8 @@ def launch(
         "game_directory": str(directory),
         "assets_root": data["assets"],
         "assets_index_name": data["index"],
-        "auth_uuid": uuid.uuid3(
-            uuid.NAMESPACE_DNS, "OfflinePlayer:" + preset["player-name"]
-        ).hex,
+        "auth_uuid": player_uuid
+        or uuid.uuid3(uuid.NAMESPACE_DNS, "OfflinePlayer:" + preset["player-name"]).hex,
         "auth_access_token": "0",
         "clientid": "",
         "auth_xuid": "0",
@@ -451,7 +452,9 @@ def launch(
     ]
     if graphics_backend is not None:
         args += ["--graphicsBackend", graphics_backend]
-    if world is not None or role == "acceptance":
+    if multiplayer is not None:
+        args += ["--quickPlayMultiplayer", multiplayer]
+    elif world is not None or role == "acceptance":
         args += ["--quickPlaySingleplayer", world or "GLASS MCP fixture"]
     env = os.environ.copy()
     for name in list(env):

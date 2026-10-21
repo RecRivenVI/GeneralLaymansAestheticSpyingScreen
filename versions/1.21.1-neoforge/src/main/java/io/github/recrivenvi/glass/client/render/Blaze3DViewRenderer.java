@@ -39,11 +39,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 /**
@@ -583,9 +581,13 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
         } finally {
             access.glass$setPosition(originalPosition);
             setCameraOrientation(access, yaw, pitch, orientation);
+            client.getEntityRenderDispatcher()
+                    .prepare(client.level, camera, client.crosshairPickEntity);
+            client.getBlockEntityRenderDispatcher().prepare(client.level, camera, client.hitResult);
             ((io.github.recrivenvi.glass.mixin.client.MinecraftRenderTargetAccessor) client)
                     .glass$setMainRenderTarget(originalTarget);
             originalTarget.bindWrite(true);
+            client.gameRenderer.lightTexture().turnOnLightLayer();
             RenderSystem.setProjectionMatrix(
                     projection, com.mojang.blaze3d.vertex.VertexSorting.DISTANCE_TO_ORIGIN);
             capturing = false;
@@ -628,47 +630,92 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
             Pair pair,
             GlassChannelCaptureContext channel,
             boolean cullExitPlane) {
-        View terminal = pair.terminal(), projector = pair.projector();
-        Direction destinationFace = terminal.facing().getOpposite();
-        Vec3 sourceCenter = Vec3.atCenterOf(projector.pos());
-        Vec3 destinationCenter = Vec3.atCenterOf(terminal.pos().relative(destinationFace));
-        GlassPortalTransform transform =
-                GlassPortalTransform.fromPlanes(
-                        projector.facing(), Direction.UP, destinationFace, Direction.UP);
-        Vec3 transformedPosition =
-                transform.transformPosition(originalPosition, sourceCenter, destinationCenter);
-        Quaternionf orientation = transform.transformOrientation(originalOrientation);
-        var angles = GlassPortalTransform.cameraAngles(orientation);
-        access.glass$setPosition(transformedPosition);
-        setCameraOrientation(access, channel.unwrapYaw(angles.yaw()), angles.pitch(), orientation);
-        Matrix4f view = new Matrix4f().rotation(orientation.conjugate(new Quaternionf()));
-        Matrix4f projection = new Matrix4f(originalProjection);
-        if (cullExitPlane)
-            projection =
-                    applyExitPlane(
-                            projection,
-                            view,
-                            transformedPosition,
-                            GlassExitPlane.blockAlignedCenter(destinationCenter, destinationFace),
-                            destinationFace);
-        channel.animateAt(transformedPosition);
-        ((io.github.recrivenvi.glass.mixin.client.MinecraftRenderTargetAccessor) client)
-                .glass$setMainRenderTarget(channel.target);
-        channel.target.bindWrite(true);
-        channel.renderer.prepareCullFrustum(
-                transformedPosition,
-                view,
-                GlassChannelProjectionPolicy.forOcclusionGraph(originalProjection));
-        RenderSystem.setProjectionMatrix(
-                projection, com.mojang.blaze3d.vertex.VertexSorting.DISTANCE_TO_ORIGIN);
-        channel.renderer.renderLevel(
-                deltaTracker,
-                false,
-                camera,
-                client.gameRenderer,
-                client.gameRenderer.lightTexture(),
-                view,
-                projection);
+        if (!channel.source.ready() || !channel.source.currentSnapshotReceived()) return;
+        try (var world = GlassCaptureWorld.open(channel.source.context(channel.renderer))) {
+            View terminal = pair.terminal(), projector = pair.projector();
+            Direction destinationFace = terminal.facing().getOpposite();
+            Vec3 sourceCenter = Vec3.atCenterOf(projector.pos());
+            Vec3 destinationCenter = Vec3.atCenterOf(terminal.pos().relative(destinationFace));
+            GlassPortalTransform transform =
+                    GlassPortalTransform.fromPlanes(
+                            projector.facing(), Direction.UP, destinationFace, Direction.UP);
+            var mapping =
+                    io.github.recrivenvi.glass.model.GlassAffinePortal.mapping(
+                            GlassSableClient.pose(client.level, projector.pos()),
+                            GlassSableClient.pose(channel.level, terminal.pos()),
+                            new org.joml.Vector3d(sourceCenter.x, sourceCenter.y, sourceCenter.z),
+                            new org.joml.Vector3d(
+                                    destinationCenter.x, destinationCenter.y, destinationCenter.z),
+                            new org.joml.Quaterniond(
+                                    transform.transformOrientation(new Quaternionf())));
+            var cameraMatrix =
+                    io.github.recrivenvi.glass.model.GlassAffinePortal.camera(
+                            mapping,
+                            new org.joml.Vector3d(
+                                    originalPosition.x, originalPosition.y, originalPosition.z),
+                            new org.joml.Quaterniond(originalOrientation));
+            var position = cameraMatrix.getTranslation(new org.joml.Vector3d());
+            Vec3 transformedPosition = new Vec3(position.x, position.y, position.z);
+            Quaternionf orientation =
+                    new Quaternionf(
+                            cameraMatrix
+                                    .getUnnormalizedRotation(new org.joml.Quaterniond())
+                                    .normalize());
+            var angles = GlassPortalTransform.cameraAngles(orientation);
+            access.glass$setPosition(transformedPosition);
+            setCameraOrientation(
+                    access, channel.unwrapYaw(angles.yaw()), angles.pitch(), orientation);
+            Matrix4f view =
+                    new Matrix4f(
+                            io.github.recrivenvi.glass.model.GlassAffinePortal.relativeView(
+                                    cameraMatrix));
+            Matrix4f projection = new Matrix4f(originalProjection);
+            if (cullExitPlane) {
+                var center = GlassExitPlane.blockAlignedCenter(destinationCenter, destinationFace);
+                var worldPlane =
+                        io.github.recrivenvi.glass.model.GlassAffinePortal.worldPlane(
+                                GlassSableClient.pose(channel.level, terminal.pos()),
+                                new org.joml.Vector3d(center.x, center.y, center.z),
+                                new org.joml.Vector3d(
+                                        destinationFace.getStepX(),
+                                        destinationFace.getStepY(),
+                                        destinationFace.getStepZ()));
+                var plane =
+                        io.github.recrivenvi.glass.model.GlassAffinePortal.viewPlane(
+                                cameraMatrix, worldPlane);
+                projection =
+                        GlassObliqueProjection.applyForwardZ(
+                                projection,
+                                new Vector4f(
+                                        (float) plane.x,
+                                        (float) plane.y,
+                                        (float) plane.z,
+                                        (float) plane.w),
+                                false);
+            }
+            channel.animateAt(transformedPosition);
+            channel.source.lightTexture.updateLightTexture(
+                    deltaTracker.getGameTimeDeltaPartialTick(false));
+            client.getEntityRenderDispatcher().prepare(channel.level, camera, null);
+            client.getBlockEntityRenderDispatcher().prepare(channel.level, camera, null);
+            ((io.github.recrivenvi.glass.mixin.client.MinecraftRenderTargetAccessor) client)
+                    .glass$setMainRenderTarget(channel.target);
+            channel.target.bindWrite(true);
+            channel.renderer.prepareCullFrustum(
+                    transformedPosition,
+                    view,
+                    GlassChannelProjectionPolicy.forOcclusionGraph(originalProjection));
+            RenderSystem.setProjectionMatrix(
+                    projection, com.mojang.blaze3d.vertex.VertexSorting.DISTANCE_TO_ORIGIN);
+            channel.renderer.renderLevel(
+                    deltaTracker,
+                    false,
+                    camera,
+                    client.gameRenderer,
+                    channel.source.lightTexture,
+                    view,
+                    projection);
+        }
     }
 
     private boolean effectiveExitPlaneCulling(GlobalPos network) {
@@ -749,27 +796,6 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
                                 view.network().equals(network)
                                         && !view.terminal()
                                         && view.active());
-    }
-
-    private static Matrix4f applyExitPlane(
-            org.joml.Matrix4fc projection,
-            Matrix4f viewRotation,
-            Vec3 cameraPosition,
-            Vec3 planeCenter,
-            Direction keepDirection) {
-        Vector3f normal =
-                new Vector3f(
-                        keepDirection.getStepX(),
-                        keepDirection.getStepY(),
-                        keepDirection.getStepZ());
-        float distance =
-                (float)
-                        (normal.x * (cameraPosition.x - planeCenter.x)
-                                + normal.y * (cameraPosition.y - planeCenter.y)
-                                + normal.z * (cameraPosition.z - planeCenter.z));
-        viewRotation.transformDirection(normal);
-        return GlassObliqueProjection.applyForwardZ(
-                projection, new Vector4f(normal.x, normal.y, normal.z, distance), false);
     }
 
     private static void setCameraOrientation(
@@ -886,7 +912,7 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
                     if (draw == null) continue;
                     VertexConsumer vertices = compositor.vertices(draw);
                     for (SurfaceGeometry surface : geometry) {
-                        GlassProjectionMesh.emitSurfaceQuad(
+                        emitSurfaceQuad(
                                 matrix, vertices, surface.pos(), surface.face(), surface.frame());
                     }
                     pendingTextures.add(
@@ -949,8 +975,7 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
         if (draw == null) return null;
         VertexConsumer vertices = compositor.vertices(draw);
         for (SurfaceGeometry surface : geometry) {
-            GlassProjectionMesh.emitSurfaceQuad(
-                    matrix, vertices, surface.pos(), surface.face(), surface.frame());
+            emitSurfaceQuad(matrix, vertices, surface.pos(), surface.face(), surface.frame());
         }
         return draw;
     }
@@ -985,7 +1010,7 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
                         if (draw == null) return;
                         VertexConsumer vertices = compositor.vertices(draw);
                         for (SurfaceGeometry surface : geometry) {
-                            GlassProjectionMesh.emitSurfaceQuad(
+                            emitSurfaceQuad(
                                     matrix,
                                     vertices,
                                     surface.pos(),
@@ -1051,10 +1076,13 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
         VertexFormat format = GlassProjectionCompositor.WIRELESS_PIPELINE.getVertexFormat();
         if (format == null) return null;
         ArrayList<Vec3> points = new ArrayList<>(positions.size() + 1);
+        matrix = GlassSableClient.surface(matrix, Minecraft.getInstance().level, projectorPos);
         Vec3 normal = Vec3.atLowerCornerOf(facing.getNormal());
-        points.add(Vec3.atCenterOf(projectorPos).add(normal.scale(GlassSurfaceGeometry.HALF_SIZE)));
+        points.add(new Vec3(.5, .5, .5).add(normal.scale(GlassSurfaceGeometry.HALF_SIZE)));
         for (BlockPos pos : positions)
-            points.add(GlassProjectionMesh.wirelessVertex(projectorPos, facing, pos));
+            points.add(
+                    GlassSableClient.wirelessVertex(
+                            Minecraft.getInstance().level, projectorPos, facing, pos));
 
         Vec3 pivot = points.getFirst();
         GlassStagedVertexBuffer.Draw draw =
@@ -1079,6 +1107,17 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
                     frame);
         }
         return draw;
+    }
+
+    private static void emitSurfaceQuad(
+            Matrix4f matrix,
+            VertexConsumer vertices,
+            BlockPos pos,
+            Direction face,
+            GlassProjectionAnimation.Frame frame) {
+        var level = Minecraft.getInstance().level;
+        GlassProjectionMesh.emitSurfaceQuad(
+                GlassSableClient.surface(matrix, level, pos), vertices, BlockPos.ZERO, face, frame);
     }
 
     private boolean isSurfaceCurrentlyActive(SurfaceKey key) {
@@ -1109,13 +1148,21 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
         double maximumSquared = maximum * maximum;
         return networkPositions(pair.projector().network()).stream()
                 .anyMatch(
-                        pos -> client.player.distanceToSqr(Vec3.atCenterOf(pos)) <= maximumSquared);
+                        pos ->
+                                client.player.distanceToSqr(
+                                                GlassSableClient.center(client.level, pos))
+                                        <= maximumSquared);
     }
 
     /** 与同一投影仪相连的所有面都在视锥外时，才剔除整个网络。 */
     private boolean isNetworkVisible(GlobalPos network, Frustum frustum) {
         if (frustum == null) return true;
-        return networkPositions(network).stream().anyMatch(pos -> frustum.isVisible(new AABB(pos)));
+        return networkPositions(network).stream()
+                .anyMatch(
+                        pos ->
+                                frustum.isVisible(
+                                        GlassSableClient.bounds(
+                                                Minecraft.getInstance().level, pos)));
     }
 
     private List<BlockPos> networkPositions(GlobalPos network) {
@@ -1305,6 +1352,13 @@ public final class Blaze3DViewRenderer implements GlassViewRenderer {
         exitPlaneCullingOverrides.clear();
         channelSwitchAnimations.values().forEach(ChannelSwitchAnimation::close);
         channelSwitchAnimations.clear();
+    }
+
+    @Override
+    public void withChannelScope(Runnable action) {
+        try (GlassChannelSnapshotIdentity.Scope ignored = channelSnapshotIdentity.open()) {
+            action.run();
+        }
     }
 
     @Override

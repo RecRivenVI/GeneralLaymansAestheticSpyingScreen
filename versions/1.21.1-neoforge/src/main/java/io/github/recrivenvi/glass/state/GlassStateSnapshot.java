@@ -110,6 +110,18 @@ public record GlassStateSnapshot(
         }
     }
 
+    public java.util.stream.Stream<GlobalPos> observationPositions(Projector projector) {
+        return java.util.stream.Stream.concat(
+                        java.util.stream.Stream.concat(
+                                java.util.stream.Stream.of(projector.pos()),
+                                projector.wirelessPositions().stream()),
+                        networks.stream()
+                                .filter(n -> n.projector().equals(projector.pos()))
+                                .flatMap(n -> n.surfaces().stream())
+                                .map(Surface::pos))
+                .distinct();
+    }
+
     public record Projector(
             GlobalPos pos, Optional<UUID> channelId, List<GlobalPos> wirelessPositions) {
         public Projector {

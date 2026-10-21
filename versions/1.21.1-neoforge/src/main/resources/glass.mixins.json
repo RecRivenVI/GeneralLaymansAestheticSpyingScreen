@@ -2,8 +2,17 @@
     "required": true,
     "package": "io.github.recrivenvi.glass.mixin.client",
     "compatibilityLevel": "JAVA_21",
+    "mixins": [
+        "ServerLevelSourceMixin",
+        "ServerEntityVisualMixin",
+        "SableBlockAssemblyMixin",
+        "EntityDataAccessor",
+        "SableSavedDataMixin",
+        "SableRestoredTicketsMixin"
+    ],
     "client": [
         "CameraAccessor",
+        "CameraCaptureWorldMixin",
         "ClientChunkCacheMixin",
         "ClientLevelMixin",
         "ClientPacketListenerMixin",
@@ -11,9 +20,19 @@
         "LevelExtractorMixin",
         "RenderSectionRegionMixin",
         "MinecraftRenderTargetAccessor",
-        "SectionRenderDispatcherMixin"
+        "SectionRenderDispatcherMixin",
+        "ParticleEngineAccessor",
+        "ParticleEngineAtlasMixin",
+        "GlassNativeWorldReadsMixin",
+        "ClientPacketListenerWorldMixin",
+        "SodiumCaptureWorldMixin",
+        "SodiumCaptureBlockVisibilityMixin",
+        "SodiumParticleSubmissionMixin",
+        "SableInterpolationScopeMixin",
+        "VanillaCaptureSectionsMixin"
     ],
     "injectors": {
         "defaultRequire": 1
-    }
+    },
+    "plugin": "io.github.recrivenvi.glass.mixin.client.GlassMixinPlugin"
 }

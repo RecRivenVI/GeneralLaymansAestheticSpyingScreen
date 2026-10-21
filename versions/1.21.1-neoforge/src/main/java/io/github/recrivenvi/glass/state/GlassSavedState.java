@@ -13,6 +13,13 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 /** 不依附方块实体的世界级持久状态。方块只提供位置与原版 BlockState；频道和无线关系 在这里独立维护。旧版方块实体 NBT 不再读取，这是现代化存档格式的明确断点。 */
 public final class GlassSavedState extends SavedData {
+    public static final String ID = "glass_state";
+    private final Map<GlobalPos, CompoundTag> sableLinks = new LinkedHashMap<>();
+
+    public Map<GlobalPos, CompoundTag> sableLinks() {
+        return sableLinks;
+    }
+
     public static final SavedData.Factory<GlassSavedState> TYPE =
             new SavedData.Factory<>(
                     GlassSavedState::new,
@@ -72,21 +79,40 @@ public final class GlassSavedState extends SavedData {
     public boolean remove(GlobalPos pos) {
         boolean changed = terminals.remove(pos) != null;
         changed |= projectors.remove(pos) != null;
+        changed |= sableLinks.remove(pos) != null;
         if (changed) setDirty();
         return changed;
     }
 
     private CompoundTag toTag() {
-        return new GlassStateSnapshot(
-                        terminals.values().stream()
-                                .sorted(Comparator.comparing(value -> value.pos().toString()))
-                                .toList(),
-                        projectors.values().stream()
-                                .sorted(Comparator.comparing(value -> value.pos().toString()))
-                                .toList(),
-                        List.of(),
-                        new GlassStateSnapshot.Settings(2, 8, 256, 2, 256, 64, 8, false))
-                .toTag();
+        CompoundTag tag =
+                new GlassStateSnapshot(
+                                terminals.values().stream()
+                                        .sorted(
+                                                Comparator.comparing(
+                                                        value -> value.pos().toString()))
+                                        .toList(),
+                                projectors.values().stream()
+                                        .sorted(
+                                                Comparator.comparing(
+                                                        value -> value.pos().toString()))
+                                        .toList(),
+                                List.of(),
+                                new GlassStateSnapshot.Settings(2, 8, 256, 2, 256, 64, 8, false))
+                        .toTag();
+        net.minecraft.nbt.ListTag links = new net.minecraft.nbt.ListTag();
+        sableLinks.forEach(
+                (pos, value) -> {
+                    CompoundTag link = value.copy();
+                    link.put(
+                            "pos",
+                            GlobalPos.CODEC
+                                    .encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, pos)
+                                    .getOrThrow());
+                    links.add(link);
+                });
+        tag.put("sableLinks", links);
+        return tag;
     }
 
     private static GlassSavedState fromTag(CompoundTag tag) {
@@ -94,6 +120,14 @@ public final class GlassSavedState extends SavedData {
         GlassStateSnapshot snapshot = GlassStateSnapshot.fromTag(tag);
         snapshot.terminals().forEach(value -> state.terminals.put(value.pos(), value));
         snapshot.projectors().forEach(value -> state.projectors.put(value.pos(), value));
+        for (var value : tag.getList("sableLinks", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            var link = (CompoundTag) value;
+            var pos =
+                    GlobalPos.CODEC
+                            .parse(net.minecraft.nbt.NbtOps.INSTANCE, link.get("pos"))
+                            .getOrThrow();
+            state.sableLinks.put(pos, link.copy());
+        }
         return state;
     }
 }

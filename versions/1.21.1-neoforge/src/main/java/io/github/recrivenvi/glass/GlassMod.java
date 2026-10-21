@@ -25,12 +25,23 @@ public final class GlassMod {
 
     public GlassMod(IEventBus bus) {
         GlassConfig.get().load();
+        if (io.github.recrivenvi.glass.remote.GlassSableServer.enabled())
+            io.github.recrivenvi.glass.remote.GlassSablePersistence.initialize();
         GlassContent.initialize(bus);
         bus.addListener(GlassNetworking::initialize);
         NeoForge.EVENT_BUS.addListener(
-                (ServerStartedEvent event) -> GlassServerState.initialize(event.getServer()));
+                (ServerStartedEvent event) -> {
+                    GlassServerState.initialize(event.getServer());
+                    if (io.github.recrivenvi.glass.remote.GlassSableServer.enabled())
+                        io.github.recrivenvi.glass.remote.GlassSablePersistence.start(
+                                event.getServer());
+                });
         NeoForge.EVENT_BUS.addListener(
-                (ServerStoppingEvent event) -> GlassServerState.stop(event.getServer()));
+                (ServerStoppingEvent event) -> {
+                    io.github.recrivenvi.glass.remote.GlassRemoteSubscriptions.stop(
+                            event.getServer());
+                    GlassServerState.stop(event.getServer());
+                });
         NeoForge.EVENT_BUS.addListener(
                 (ChunkEvent.Load event) -> {
                     if (event.getLevel() instanceof ServerLevel level)
@@ -45,7 +56,17 @@ public final class GlassMod {
                 (ChunkWatchEvent.Sent event) ->
                         GlassServerState.chunkLoaded(event.getLevel(), event.getPos()));
         NeoForge.EVENT_BUS.addListener(
-                (ServerTickEvent.Post event) -> GlassServerState.tick(event.getServer()));
+                (ServerTickEvent.Post event) -> {
+                    GlassServerState.tick(event.getServer());
+                    io.github.recrivenvi.glass.remote.GlassRemoteSubscriptions.tick(
+                            event.getServer());
+                });
+        NeoForge.EVENT_BUS.addListener(
+                (PlayerEvent.PlayerLoggedOutEvent event) -> {
+                    if (event.getEntity() instanceof ServerPlayer player)
+                        io.github.recrivenvi.glass.remote.GlassRemoteSubscriptions.disconnect(
+                                player);
+                });
         NeoForge.EVENT_BUS.addListener(
                 (PlayerEvent.PlayerLoggedInEvent event) -> {
                     if (event.getEntity() instanceof ServerPlayer player)
